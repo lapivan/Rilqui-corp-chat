@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\RilquiChat.Application\RilquiChat.Application.csproj" />
+      <ProjectReference Include="..\RilquiChat.Domain\RilquiChat.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
