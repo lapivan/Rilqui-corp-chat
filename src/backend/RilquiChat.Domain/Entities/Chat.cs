@@ -66,4 +66,15 @@ public class Chat : BaseEntity
     {
         _messages.Add(message);
     }
+    
+    public void PinMessage(Message message)
+    {
+        if (message.ChatId != this.Id) throw new InvalidOperationException("Message does not belong to this chat.");
+        
+        if (_messages.Count(m => m.IsPinned) >= 10) 
+            throw new InvalidOperationException("Maximum 10 pinned messages allowed per chat.");
+
+        message.Pin();
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

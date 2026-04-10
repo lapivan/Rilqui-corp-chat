@@ -14,6 +14,8 @@ public class ChatMember : BaseEntity
     public UserRole Role { get; private set; }
     public DateTime JoinedAt { get; private set; }
 
+    public Guid? LastReadMessageId { get; private set; }
+
     private ChatMember() { }
 
     public ChatMember(Guid userId, Guid chatId, UserRole role)
@@ -31,6 +33,12 @@ public class ChatMember : BaseEntity
     {
         if (!Enum.IsDefined(typeof(UserRole), newRole)) throw new ArgumentException("Invalid chat role.", nameof(newRole));
         Role = newRole;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public void UpdateLastReadMessage(Guid messageId)
+    {
+        LastReadMessageId = messageId;
         UpdatedAt = DateTime.UtcNow;
     }
 }

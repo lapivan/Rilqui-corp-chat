@@ -11,6 +11,9 @@ public class Message : BaseEntity
     public MessageType Type { get; private set; }
     public string? FileUrl { get; private set; }
     
+    public string? FileName { get; private set; }
+    public long? FileSize { get; private set; }
+    
     public Guid SenderId { get; private set; }
     public virtual User Sender { get; private set; } = null!;
 
@@ -33,7 +36,7 @@ public class Message : BaseEntity
         Type = MessageType.Text;
     }
     
-    public static Message CreateFileMessage(Guid senderId, Guid chatId, string fileUrl, MessageType type, string? description = null)
+    public static Message CreateFileMessage(Guid senderId, Guid chatId, string fileUrl, string fileName, long fileSize, MessageType type, string? description = null)
     {
         if (type == MessageType.Text) throw new ArgumentException("Use constructor for text messages.");
         
@@ -42,6 +45,8 @@ public class Message : BaseEntity
             SenderId = senderId,
             ChatId = chatId,
             FileUrl = fileUrl,
+            FileName = fileName,
+            FileSize = fileSize,
             Content = description,
             Type = type,
             CreatedAt = DateTime.UtcNow
