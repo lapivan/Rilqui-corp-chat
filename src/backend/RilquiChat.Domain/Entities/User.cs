@@ -16,8 +16,9 @@ public class User : BaseEntity
 
     private User() { }
 
-    public User(string username, string fullname, string email, UserRole role, string? avatarUrl)
+    public User(Guid id, string username, string fullname, string email, UserRole role, string? avatarUrl)
     {
+        Id = id;
         ValidateUsername(username);
         ValidateFullname(fullname);
         ValidateEmail(email);
