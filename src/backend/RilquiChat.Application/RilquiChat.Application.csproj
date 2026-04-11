@@ -10,4 +10,17 @@
       <ProjectReference Include="..\RilquiChat.Domain\RilquiChat.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+      <PackageReference Include="Mapster" Version="10.0.7" />
+      <PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
+      <PackageReference Include="MediatR" Version="14.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Common\Interfaces\" />
+      <Folder Include="DTOs\" />
+      <Folder Include="Features\" />
+    </ItemGroup>
+
 </Project>
