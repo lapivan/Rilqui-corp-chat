@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace RilquiChat.Application.Features.Auth.Commands.UpdateProfile;
+namespace RilquiChat.Application.Features.Users.Commands.UpdateProfile;
 
 public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
 {

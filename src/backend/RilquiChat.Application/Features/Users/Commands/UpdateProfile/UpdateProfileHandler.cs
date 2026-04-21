@@ -4,7 +4,7 @@ using RilquiChat.Application.Common.Interfaces;
 using RilquiChat.Application.DTOs;
 using RilquiChat.Domain.Interfaces;
 
-namespace RilquiChat.Application.Features.Auth.Commands.UpdateProfile;
+namespace RilquiChat.Application.Features.Users.Commands.UpdateProfile;
 
 public class UpdateProfileHandler(
     IUnitOfWork unitOfWork,
