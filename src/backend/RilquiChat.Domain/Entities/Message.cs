@@ -71,6 +71,10 @@ public class Message : BaseEntity
         IsPinned = false;
         UpdatedAt = DateTime.UtcNow;
     }
+    public void SetReplyTo(Guid parentMessageId)
+    {
+        ParentMessageId = parentMessageId;
+    }
 
     public void EditContent(string newContent)
     {
