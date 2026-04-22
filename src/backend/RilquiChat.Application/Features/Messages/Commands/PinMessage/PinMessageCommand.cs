@@ -1,5 +1,7 @@
-﻿using MediatR;
+﻿using Mapster;
+using MediatR;
 using RilquiChat.Application.Common.Interfaces;
+using RilquiChat.Application.DTOs;
 using RilquiChat.Domain.Enums;
 using RilquiChat.Domain.Interfaces;
 
@@ -9,7 +11,8 @@ public record PinMessageCommand(Guid MessageId) : IRequest<Unit>;
 
 public class PinMessageHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<PinMessageCommand, Unit>
+    ICurrentUserService currentUserService, 
+    ISignalRService signalRService) : IRequestHandler<PinMessageCommand, Unit>
 {
     public async Task<Unit> Handle(PinMessageCommand request, CancellationToken ct)
     {
@@ -34,6 +37,9 @@ public class PinMessageHandler(
         chat.PinMessage(message);
 
         await unitOfWork.SaveChangesAsync(ct);
+        
+        await signalRService.SendUpdateAsync(message.ChatId, message.Adapt<MessageDto>());
+        
         return Unit.Value;
     }
 }

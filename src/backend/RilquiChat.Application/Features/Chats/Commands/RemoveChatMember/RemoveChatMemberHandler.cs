@@ -7,7 +7,8 @@ namespace RilquiChat.Application.Features.Chats.Commands.RemoveChatMember;
 
 public class RemoveChatMemberHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<RemoveChatMemberCommand, Unit>
+    ICurrentUserService currentUserService,
+    ISignalRService signalRService) : IRequestHandler<RemoveChatMemberCommand, Unit>
 {
     public async Task<Unit> Handle(RemoveChatMemberCommand request, CancellationToken cancellationToken)
     {
@@ -35,6 +36,10 @@ public class RemoveChatMemberHandler(
         currentChat.RemoveMember(request.UserId);
         
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        var user = currentChat.Members.FirstOrDefault(m => m.UserId == currentUserId);
+        
+        await signalRService.NotifyMemberChangeAsync(currentChat.Id, user.User.Username, false);
 
         return Unit.Value;
     }

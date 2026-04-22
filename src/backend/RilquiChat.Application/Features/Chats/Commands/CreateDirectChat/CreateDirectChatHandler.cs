@@ -10,7 +10,9 @@ namespace RilquiChat.Application.Features.Chats.Commands.CreateDirectChat;
 
 public class CreateDirectChatHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<CreateDirectChatCommand, ChatDetailDto>
+    ICurrentUserService currentUserService,
+    ISignalRService signalRService
+    ) : IRequestHandler<CreateDirectChatCommand, ChatDetailDto>
 {
     public async Task<ChatDetailDto> Handle(CreateDirectChatCommand request, CancellationToken cancellationToken)
     {
@@ -38,6 +40,8 @@ public class CreateDirectChatHandler(
 
         await unitOfWork.Chats.AddAsync(newChat, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await signalRService.NotifyChatCreatedAsync(request.PartnerId, newChat.Adapt<ChatSummaryDto>());
 
         return newChat.Adapt<ChatDetailDto>();
     }

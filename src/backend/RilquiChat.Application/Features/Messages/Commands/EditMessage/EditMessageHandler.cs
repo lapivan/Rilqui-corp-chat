@@ -8,7 +8,8 @@ namespace RilquiChat.Application.Features.Messages.Commands.EditMessage;
 
 public class EditMessageHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<EditMessageCommand, MessageDto>
+    ICurrentUserService currentUserService, 
+    ISignalRService signalRService) : IRequestHandler<EditMessageCommand, MessageDto>
 {
     public async Task<MessageDto> Handle(EditMessageCommand request, CancellationToken cancellationToken)
     {
@@ -27,6 +28,8 @@ public class EditMessageHandler(
         
         await unitOfWork.Messages.UpdateAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await signalRService.SendUpdateAsync(message.ChatId, message.Adapt<MessageDto>());
         
         return message.Adapt<MessageDto>();
     }

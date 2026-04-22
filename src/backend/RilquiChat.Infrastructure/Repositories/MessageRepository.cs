@@ -45,4 +45,27 @@ public class MessageRepository(AppDbContext context) : RepositoryBase<Message>(c
             .OrderByDescending(m => m.CreatedAt) 
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Message>> GetPagedMessagesAsync(
+        Guid chatId, 
+        DateTime? beforeTimestamp, 
+        int take, 
+        CancellationToken ct)
+    {
+        var query = _context.Messages
+            .AsNoTracking()
+            .Where(m => m.ChatId == chatId);
+
+        if (beforeTimestamp.HasValue)
+        {
+            query = query.Where(m => m.CreatedAt < beforeTimestamp.Value);
+        }
+
+        return await query
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(take)
+            .Include(m => m.Sender) 
+            .Include(m => m.ParentMessage)
+            .ToListAsync(ct);
+    }
 }

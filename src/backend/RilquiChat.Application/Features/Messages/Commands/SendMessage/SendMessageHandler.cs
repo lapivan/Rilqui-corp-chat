@@ -9,7 +9,8 @@ namespace RilquiChat.Application.Features.Messages.Commands.SendMessage;
 
 public class SendMessageHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<SendMessageCommand, MessageDto>
+    ICurrentUserService currentUserService,
+    ISignalRService signalRService) : IRequestHandler<SendMessageCommand, MessageDto>
 {
     public async Task<MessageDto> Handle(SendMessageCommand request, CancellationToken cancellationToken)
     {
@@ -39,6 +40,7 @@ public class SendMessageHandler(
         chat.AddMessage(message);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await signalRService.SendMessageAsync(message.ChatId, message.Adapt<MessageDto>());
 
         return message.Adapt<MessageDto>();
     }

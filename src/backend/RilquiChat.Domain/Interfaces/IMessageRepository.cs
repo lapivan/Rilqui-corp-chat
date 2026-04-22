@@ -29,4 +29,5 @@ public interface IMessageRepository
     Task AddAsync(Message entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(Message entity, CancellationToken cancellationToken = default);
     Task DeleteAsync(Message entity, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Message>> GetPagedMessagesAsync(Guid chatId, DateTime? beforeTimestamp, int take, CancellationToken ct);
 }

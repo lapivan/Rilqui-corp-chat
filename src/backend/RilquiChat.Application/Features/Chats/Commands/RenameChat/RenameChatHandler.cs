@@ -7,7 +7,8 @@ namespace RilquiChat.Application.Features.Chats.Commands.RenameChat;
 
 public class RenameChatHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<RenameChatCommand, Unit>
+    ICurrentUserService currentUserService,
+    ISignalRService signalRService) : IRequestHandler<RenameChatCommand, Unit>
 {
     public async Task<Unit> Handle(RenameChatCommand request, CancellationToken cancellationToken)
     {
@@ -25,6 +26,8 @@ public class RenameChatHandler(
         chat.Rename(request.NewTitle);
         
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await signalRService.NotifyChatRenameAsync(chat.Id, chat.Title);
 
         return Unit.Value;
     }

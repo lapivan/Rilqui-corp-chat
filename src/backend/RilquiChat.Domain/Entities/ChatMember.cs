@@ -15,6 +15,12 @@ public class ChatMember : BaseEntity
     public DateTime JoinedAt { get; private set; }
 
     public Guid? LastReadMessageId { get; private set; }
+    public DateTime LastReadAt { get; private set; } = DateTime.UtcNow;
+
+    public void UpdateLastRead()
+    {
+        LastReadAt = DateTime.UtcNow;
+    }
 
     private ChatMember() { }
 

@@ -6,7 +6,8 @@ namespace RilquiChat.Application.Features.Messages.Commands.DeleteMessage;
 
 public class DeleteMessageHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<DeleteMessageCommand, Unit>
+    ICurrentUserService currentUserService, 
+    ISignalRService signalRService) : IRequestHandler<DeleteMessageCommand, Unit>
 {
     public async Task<Unit> Handle(DeleteMessageCommand request, CancellationToken cancellationToken)
     {
@@ -22,6 +23,9 @@ public class DeleteMessageHandler(
 
         await unitOfWork.Messages.DeleteAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await signalRService.SendDeletionAsync(message.ChatId, message.Id);
+        
         return Unit.Value;
     }
 }

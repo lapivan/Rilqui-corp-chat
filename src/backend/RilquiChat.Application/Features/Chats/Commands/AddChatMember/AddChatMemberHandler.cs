@@ -7,7 +7,8 @@ namespace RilquiChat.Application.Features.Chats.Commands.AddChatMember;
 
 public class AddChatMemberHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService): IRequestHandler<AddChatMemberCommand, Unit>
+    ICurrentUserService currentUserService,
+    ISignalRService signalRService): IRequestHandler<AddChatMemberCommand, Unit>
 {
     public async Task<Unit> Handle(AddChatMemberCommand request, CancellationToken cancellationToken)
     {
@@ -29,6 +30,8 @@ public class AddChatMemberHandler(
         chat.AddMember(userToAdd, UserRole.User);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await signalRService.NotifyMemberChangeAsync(chat.Id, userToAdd.Username, true);
 
         return Unit.Value;
     }
