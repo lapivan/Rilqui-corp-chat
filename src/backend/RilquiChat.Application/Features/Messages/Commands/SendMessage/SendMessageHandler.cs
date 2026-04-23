@@ -1,9 +1,9 @@
 ﻿using Mapster;
+using MediatR;
 using RilquiChat.Application.Common.Interfaces;
 using RilquiChat.Application.DTOs;
-using RilquiChat.Domain.Interfaces;
-using MediatR;
 using RilquiChat.Domain.Entities;
+using RilquiChat.Domain.Interfaces;
 
 namespace RilquiChat.Application.Features.Messages.Commands.SendMessage;
 
@@ -19,7 +19,8 @@ public class SendMessageHandler(
         var chat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, cancellationToken, c => c.Members);
         if (chat == null) throw new Exception("Chat not found.");
         
-        if (chat.Members.All(m => m.UserId != currentUserId)) throw new Exception("You are not a member of this chat.");
+        if (chat.Members.All(m => m.UserId != currentUserId)) 
+            throw new Exception("You are not a member of this chat.");
 
         if (request.ParentMessageId.HasValue)
         {
@@ -32,16 +33,19 @@ public class SendMessageHandler(
 
         var message = new Message(request.Content, currentUserId, chat.Id);
 
-        if (request.ParentMessageId.HasValue)
-        {
-            message.SetReplyTo(request.ParentMessageId.Value);
-        }
-
-        chat.AddMessage(message);
-
+        await unitOfWork.Messages.AddAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        await signalRService.SendMessageAsync(message.ChatId, message.Adapt<MessageDto>());
 
-        return message.Adapt<MessageDto>();
+        var sender = await unitOfWork.Users.GetByIdAsync(currentUserId, cancellationToken);
+        var dto = message.Adapt<MessageDto>() with 
+        { 
+            SenderName = sender != null 
+                ? (!string.IsNullOrWhiteSpace(sender.Fullname) ? sender.Fullname : sender.Username) 
+                : null 
+        };
+
+        await signalRService.SendMessageAsync(message.ChatId, dto);
+
+        return dto;
     }
 }

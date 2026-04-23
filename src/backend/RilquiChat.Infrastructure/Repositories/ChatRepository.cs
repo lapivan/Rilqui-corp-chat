@@ -1,14 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RilquiChat.Domain.Entities;
 using RilquiChat.Domain.Enums;
+using RilquiChat.Domain.Interfaces;
 using RilquiChat.Infrastructure.Data;
 
 namespace RilquiChat.Infrastructure.Repositories;
 
 public class ChatRepository(AppDbContext context) : RepositoryBase<Chat>(context), IChatRepository
 {
+    public async Task<Chat?> GetWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _entities
+            .Include(c => c.Members)
+            .ThenInclude(m => m.User)
+            .Include(c => c.Messages)
+            .ThenInclude(m => m.Sender)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Chat>> GetUserChatsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _entities
+            .Include(c => c.Members)
+            .ThenInclude(m => m.User)
             .Where(c => c.Members.Any(m => m.UserId == userId))
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync(cancellationToken);

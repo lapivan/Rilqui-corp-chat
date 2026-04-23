@@ -25,4 +25,5 @@ public interface IChatRepository
     Task AddAsync(Chat entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(Chat entity, CancellationToken cancellationToken = default);
     Task DeleteAsync(Chat entity, CancellationToken cancellationToken = default);
+    Task<Chat?> GetWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 }

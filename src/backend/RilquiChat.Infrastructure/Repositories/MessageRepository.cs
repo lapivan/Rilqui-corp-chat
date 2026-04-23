@@ -15,16 +15,17 @@ public class MessageRepository(AppDbContext context) : RepositoryBase<Message>(c
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Message>> SearchInChatAsync(Guid chatId, string searchTerm, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Message>> SearchInChatAsync(Guid chatId, string searchTerm, CancellationToken ct)
     {
         var lowerTerm = searchTerm.ToLower();
-
+    
         return await _entities
-            .Where(m => m.ChatId == chatId)
-            .Where(m => (m.Content != null && m.Content.ToLower().Contains(lowerTerm)) || 
-                        (m.FileName != null && m.FileName.ToLower().Contains(lowerTerm)))
+            .Include(m => m.Sender)
+            .Where(m => m.ChatId == chatId && 
+                        m.Content != null && 
+                        m.Content.ToLower().Contains(lowerTerm))
             .OrderByDescending(m => m.CreatedAt)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
     public async Task<IReadOnlyList<Message>> GlobalSearchAsync(Guid userId, string searchTerm, CancellationToken cancellationToken = default)

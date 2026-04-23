@@ -10,7 +10,8 @@ namespace RilquiChat.Application.Features.Messages.Commands.SendFile;
 public class SendFileHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IFileStorageService fileStorageService) : IRequestHandler<SendFileCommand, MessageDto>
+    IFileStorageService fileStorageService,
+    ISignalRService signalRService) : IRequestHandler<SendFileCommand, MessageDto>
 {
     public async Task<MessageDto> Handle(SendFileCommand request, CancellationToken ct)
     {
@@ -32,9 +33,19 @@ public class SendFileHandler(
             request.Description
         );
 
-        chat.AddMessage(message);
+        await unitOfWork.Messages.AddAsync(message, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return message.Adapt<MessageDto>();
+        var sender = await unitOfWork.Users.GetByIdAsync(currentUserId, ct);
+        var dto = message.Adapt<MessageDto>() with 
+        { 
+            SenderName = sender != null 
+                ? (!string.IsNullOrWhiteSpace(sender.Fullname) ? sender.Fullname : sender.Username) 
+                : null 
+        };
+
+        await signalRService.SendMessageAsync(message.ChatId, dto);
+
+        return dto;
     }
 }

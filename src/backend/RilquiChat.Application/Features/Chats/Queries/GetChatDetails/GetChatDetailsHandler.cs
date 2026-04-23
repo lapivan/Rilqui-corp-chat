@@ -2,6 +2,7 @@
 using MediatR;
 using RilquiChat.Application.Common.Interfaces;
 using RilquiChat.Application.DTOs;
+using RilquiChat.Domain.Enums;
 using RilquiChat.Domain.Interfaces;
 
 namespace RilquiChat.Application.Features.Chats.Queries.GetChatDetails;
@@ -15,12 +16,7 @@ public class GetChatDetailsHandler(
         var currentUserId = currentUserService.UserId 
                             ?? throw new UnauthorizedAccessException();
         
-        var chat = await unitOfWork.Chats.GetByIdAsync(
-            request.ChatId, 
-            cancellationToken, 
-            c => c.Members,
-            c => c.Messages
-        );
+        var chat = await unitOfWork.Chats.GetWithDetailsAsync(request.ChatId, cancellationToken);
 
         if (chat == null)
             throw new Exception("Chat not found.");
@@ -31,6 +27,19 @@ public class GetChatDetailsHandler(
         }
 
         var dto = chat.Adapt<ChatDetailDto>();
+
+        if (chat.Type == ChatType.Direct)
+        {
+            var otherMember = chat.Members.FirstOrDefault(m => m.UserId != currentUserId);
+            if (otherMember?.User != null)
+            {
+                var displayName = !string.IsNullOrWhiteSpace(otherMember.User.Fullname) 
+                    ? otherMember.User.Fullname 
+                    : otherMember.User.Username;
+                
+                dto = dto with { Title = displayName };
+            }
+        }
 
         return dto;
     }

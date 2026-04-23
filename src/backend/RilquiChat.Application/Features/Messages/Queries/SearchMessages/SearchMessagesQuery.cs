@@ -17,12 +17,9 @@ public class SearchMessagesHandler(
         var currentUserId = currentUserService.UserId 
                             ?? throw new UnauthorizedAccessException();
         
-        var chat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, ct, c => c.Members);
+        var isMember = await unitOfWork.ChatMembers.GetByChatAndUserAsync(request.ChatId, currentUserId, ct);
         
-        if (chat == null)
-            throw new Exception("Chat not found.");
-        
-        if (chat.Members.All(m => m.UserId != currentUserId))
+        if (isMember == null)
         {
             throw new Exception("Access denied. You are not a member of this chat.");
         }

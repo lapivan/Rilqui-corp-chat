@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace RilquiChat.Infrastructure.Repositories;
 
-public abstract class RepositoryBase<T> where T: BaseEntity
+public abstract class RepositoryBase<T> where T : BaseEntity
 {
     protected readonly AppDbContext _context;
     protected readonly DbSet<T> _entities;
@@ -16,14 +16,14 @@ public abstract class RepositoryBase<T> where T: BaseEntity
         _entities = _context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, 
+    public virtual async Task<T?> GetByIdAsync(Guid id, 
         CancellationToken cancellationToken = default,
         params Expression<Func<T, object>>[]? includesProperties)
     {
-        IQueryable<T>? query = _entities.AsQueryable();
+        IQueryable<T> query = _entities.AsQueryable();
         return await ApplyIncludes(query, includesProperties).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
-    
+
     public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> filter, 
         CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public abstract class RepositoryBase<T> where T: BaseEntity
         CancellationToken cancellationToken = default,
         params Expression<Func<T, object>>[]? includesProperties)
     {
-        IQueryable<T>? query = _entities.AsQueryable();
+        IQueryable<T> query = _entities.AsQueryable();
         query = ApplyIncludes(query, includesProperties);
         
         query = query.Where(filter);
@@ -67,7 +67,7 @@ public abstract class RepositoryBase<T> where T: BaseEntity
     {
         if (includesProperties != null && includesProperties.Any())
         {
-            foreach (Expression<Func<T, object>>? included in includesProperties)
+            foreach (var included in includesProperties)
             {
                 query = query.Include(included);
             }

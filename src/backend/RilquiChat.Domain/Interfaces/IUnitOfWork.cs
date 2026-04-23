@@ -5,6 +5,7 @@ public interface IUnitOfWork : IDisposable
     IChatRepository Chats { get; }
     IMessageRepository Messages { get; }
     IUserRepository Users { get; }
+    IChatMemberRepository ChatMembers { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();

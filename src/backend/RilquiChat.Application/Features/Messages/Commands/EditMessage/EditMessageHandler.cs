@@ -28,9 +28,17 @@ public class EditMessageHandler(
         
         await unitOfWork.Messages.UpdateAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var sender = await unitOfWork.Users.GetByIdAsync(currentUserId, cancellationToken);
+        var dto = message.Adapt<MessageDto>() with 
+        { 
+            SenderName = sender != null 
+                ? (!string.IsNullOrWhiteSpace(sender.Fullname) ? sender.Fullname : sender.Username) 
+                : null 
+        };
         
-        await signalRService.SendUpdateAsync(message.ChatId, message.Adapt<MessageDto>());
+        await signalRService.SendUpdateAsync(message.ChatId, dto);
         
-        return message.Adapt<MessageDto>();
+        return dto;
     }
 }

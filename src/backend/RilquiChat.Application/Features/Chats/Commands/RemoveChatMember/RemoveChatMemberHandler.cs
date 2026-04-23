@@ -14,32 +14,25 @@ public class RemoveChatMemberHandler(
     {
         var currentUserId = currentUserService.UserId ?? throw new UnauthorizedAccessException();
         
-        var currentChat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, cancellationToken, c => c.Members);
-        
-        if(currentChat == null) throw new Exception("Chat not found.");
-
-        var memberToRemove = currentChat.Members.FirstOrDefault(m => m.UserId == request.UserId);
+        var memberToRemove = await unitOfWork.ChatMembers.GetByChatAndUserAsync(request.ChatId, request.UserId, cancellationToken);
         if (memberToRemove == null) throw new Exception("User is not a member of this chat.");
-        
+
+        var usernameForNotify = memberToRemove.User.Username;
         bool isSelfRemoval = currentUserId == request.UserId;
 
         if (!isSelfRemoval)
         {
-            var currentUserInChat = currentChat.Members.FirstOrDefault(m => m.UserId == currentUserId);
-            
-            if (currentUserInChat == null || currentUserInChat.Role != UserRole.Admin)
+            var adminMember = await unitOfWork.ChatMembers.GetByChatAndUserAsync(request.ChatId, currentUserId, cancellationToken);
+            if (adminMember == null || adminMember.Role != UserRole.Admin)
             {
-                throw new Exception("Only admins can remove other members from the chat.");
+                throw new Exception("Only admins can remove other members.");
             }
         }
         
-        currentChat.RemoveMember(request.UserId);
-        
+        unitOfWork.ChatMembers.Remove(memberToRemove);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         
-        var user = currentChat.Members.FirstOrDefault(m => m.UserId == currentUserId);
-        
-        await signalRService.NotifyMemberChangeAsync(currentChat.Id, user.User.Username, false);
+        await signalRService.NotifyMemberChangeAsync(request.ChatId, usernameForNotify, false);
 
         return Unit.Value;
     }

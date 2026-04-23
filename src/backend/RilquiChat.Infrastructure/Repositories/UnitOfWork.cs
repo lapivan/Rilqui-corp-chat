@@ -12,6 +12,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly Lazy<IUserRepository> _userRepository;
     private readonly Lazy<IChatRepository> _chatRepository;
     private readonly Lazy<IMessageRepository> _messageRepository;
+    private readonly Lazy<IChatMemberRepository> _chatMemberRepository;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -19,11 +20,13 @@ public class UnitOfWork : IUnitOfWork
         _userRepository = new Lazy<IUserRepository>(() => new UserRepository(_context));
         _chatRepository = new Lazy<IChatRepository>(() => new ChatRepository(_context));
         _messageRepository = new Lazy<IMessageRepository>(() => new MessageRepository(_context));
+        _chatMemberRepository = new Lazy<IChatMemberRepository>(() => new ChatMemberRepository(_context));
     }
 
     public IUserRepository Users => _userRepository.Value;
     public IChatRepository Chats => _chatRepository.Value;
     public IMessageRepository Messages => _messageRepository.Value;
+    public IChatMemberRepository ChatMembers => _chatMemberRepository.Value;
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

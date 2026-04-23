@@ -25,24 +25,22 @@ public class MessagesController : BaseApiController
     }
 
     [HttpPost("file")]
-    public async Task<ActionResult<MessageDto>> SendFile(
-        [FromForm] Guid chatId, 
-        [FromForm] IFormFile file, 
-        [FromForm] string? description = null)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<MessageDto>> SendFile([FromForm] SendFileRequest request)
     {
-        var messageType = file.ContentType.ToLower().StartsWith("audio/") 
+        var messageType = request.File.ContentType.ToLower().StartsWith("audio/") 
             ? MessageType.Voice 
             : MessageType.File;
 
-        using var stream = file.OpenReadStream();
+        using var stream = request.File.OpenReadStream();
         
         var command = new SendFileCommand(
-            chatId, 
+            request.ChatId, 
             stream, 
-            file.FileName, 
-            file.ContentType, 
+            request.File.FileName, 
+            request.File.ContentType, 
             messageType, 
-            description);
+            request.Description);
         
         return Ok(await Mediator.Send(command));
     }
@@ -84,5 +82,11 @@ public class MessagesController : BaseApiController
     public async Task<ActionResult<List<MessageDto>>> Search(Guid chatId, [FromQuery] string query)
     {
         return Ok(await Mediator.Send(new SearchMessagesQuery(chatId, query)));
+    }
+    public class SendFileRequest
+    {
+        public Guid ChatId { get; set; }
+        public IFormFile File { get; set; } = null!;
+        public string? Description { get; set; }
     }
 }
