@@ -3,7 +3,6 @@ using FluentValidation;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
-using MediatR;
 using RilquiChat.Application.Common.Behaviors;
 
 namespace RilquiChat.Application;
@@ -21,6 +20,7 @@ public static class DependencyInjection
         });
         
         services.AddValidatorsFromAssembly(assembly);
+        
         var config = TypeAdapterConfig.GlobalSettings;
         config.Scan(assembly);
         services.AddSingleton(config);
