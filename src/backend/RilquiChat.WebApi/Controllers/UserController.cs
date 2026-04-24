@@ -7,6 +7,7 @@ using RilquiChat.Application.Features.Users.Commands.UpdateProfile;
 using RilquiChat.Application.Features.Users.Queries.GetCurrentUser;
 using RilquiChat.Application.Features.Users.Queries.SearchUsers;
 using RilquiChat.Application.DTOs;
+using RilquiChat.Application.Features.Users.Commands.UploadAvatar;
 
 namespace RilquiChat.WebAPI.Controllers;
 
@@ -44,5 +45,19 @@ public class UserController : BaseApiController
     public async Task<ActionResult<List<UserDto>>> Search([FromQuery] string term)
     {
         return Ok(await Mediator.Send(new SearchUsersQuery(term)));
+    }
+    
+    [Authorize]
+    [HttpPost("avatar")]
+    public async Task<ActionResult<string>> UploadAvatar(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        using var stream = file.OpenReadStream();
+        var command = new UploadAvatarCommand(stream, file.FileName);
+    
+        var url = await Mediator.Send(command);
+        return Ok(new { url });
     }
 }

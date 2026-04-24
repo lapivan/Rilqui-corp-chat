@@ -14,5 +14,4 @@ public record ChatDetailDto(
     Guid Id,
     string? Title,
     ChatType Type,
-    IReadOnlyCollection<ChatMemberDto> Members,
-    IReadOnlyCollection<MessageDto> PinnedMessages);
+    IReadOnlyCollection<ChatMemberDto> Members);

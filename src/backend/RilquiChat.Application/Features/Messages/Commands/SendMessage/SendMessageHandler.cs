@@ -3,6 +3,7 @@ using MediatR;
 using RilquiChat.Application.Common.Interfaces;
 using RilquiChat.Application.DTOs;
 using RilquiChat.Domain.Entities;
+using RilquiChat.Domain.Enums;
 using RilquiChat.Domain.Interfaces;
 
 namespace RilquiChat.Application.Features.Messages.Commands.SendMessage;
@@ -19,8 +20,14 @@ public class SendMessageHandler(
         var chat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, cancellationToken, c => c.Members);
         if (chat == null) throw new Exception("Chat not found.");
         
-        if (chat.Members.All(m => m.UserId != currentUserId)) 
+        var member = chat.Members.FirstOrDefault(m => m.UserId == currentUserId);
+        if (member == null) 
             throw new Exception("You are not a member of this chat.");
+
+        if (chat.Type == ChatType.Channel && member.Role != UserRole.Admin)
+        {
+            throw new Exception("Only administrators can send messages to this channel.");
+        }
 
         if (request.ParentMessageId.HasValue)
         {

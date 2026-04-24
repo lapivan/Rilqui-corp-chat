@@ -9,7 +9,7 @@ public class User : BaseEntity
     public string Fullname { get; private set; }
     public string Email { get; private set; }
     public UserRole Role { get; private set; }
-    public string? AvatarUrl { get; set; }
+    public string? AvatarUrl { get; private set; } // Вернул private set для соблюдения инкапсуляции
 
     private readonly List<ChatMember> _chatMembers = new();
     public virtual IReadOnlyCollection<ChatMember> ChatMembers => _chatMembers.AsReadOnly();
@@ -60,7 +60,15 @@ public class User : BaseEntity
 
     private void ValidateAvatarUrl(string? avatarUrl)
     {
-        if (avatarUrl != null && !Uri.TryCreate(avatarUrl, UriKind.Absolute, out _)) throw new ArgumentException("Invalid avatar URL format.", nameof(avatarUrl));
+        if (string.IsNullOrEmpty(avatarUrl)) return;
+        
+        var isRelative = avatarUrl.StartsWith("/");
+        var isAbsolute = Uri.TryCreate(avatarUrl, UriKind.Absolute, out _);
+
+        if (!isRelative && !isAbsolute)
+        {
+            throw new ArgumentException("Invalid avatar URL format.", nameof(avatarUrl));
+        }
     }
 
     public void ChangeUsername(string username)
@@ -97,5 +105,4 @@ public class User : BaseEntity
         AvatarUrl = avatarUrl;
         UpdatedAt = DateTime.UtcNow;
     }
-    
 }

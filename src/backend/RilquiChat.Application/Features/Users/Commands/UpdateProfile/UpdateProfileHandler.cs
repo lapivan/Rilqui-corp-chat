@@ -32,11 +32,7 @@ public class UpdateProfileHandler(
         {
             user.ChangeFullname(request.Fullname);
         }
-
-        if (request.AvatarUrl != user.AvatarUrl)
-        {
-            user.ChangeAvatarUrl(request.AvatarUrl);
-        }
+        
         await unitOfWork.SaveChangesAsync(ct);
 
         return user.Adapt<UserDto>();
