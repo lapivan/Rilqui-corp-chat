@@ -31,7 +31,7 @@ public class SendMessageHandler(
                 throw new Exception("Parent message not found in this chat.");
         }
 
-        var message = new Message(request.Content, currentUserId, chat.Id);
+        var message = new Message(request.Content, currentUserId, chat.Id, request.ParentMessageId);
 
         await unitOfWork.Messages.AddAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

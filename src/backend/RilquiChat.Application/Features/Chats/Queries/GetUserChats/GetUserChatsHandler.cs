@@ -13,9 +13,11 @@ public class GetUserChatsHandler(
     public async Task<IReadOnlyCollection<ChatSummaryDto>> Handle(GetUserChatsQuery request, CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId ?? throw new UnauthorizedAccessException();
-        
+    
         var chats = await unitOfWork.Chats.GetUserChatsAsync(userId, cancellationToken);
         
-        return chats.Adapt<List<ChatSummaryDto>>();
+        return chats.BuildAdapter()
+            .AddParameters("UserId", userId)
+            .AdaptToType<List<ChatSummaryDto>>();
     }
 }

@@ -20,6 +20,15 @@ public class SendFileHandler(
         var chat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, ct, c => c.Members);
         if (chat == null || chat.Members.All(m => m.UserId != currentUserId))
             throw new Exception("Chat not found or access denied.");
+
+        if (request.ParentMessageId.HasValue)
+        {
+            var parentExists = await unitOfWork.Messages.FirstOrDefaultAsync(
+                m => m.Id == request.ParentMessageId && m.ChatId == request.ChatId, ct);
+            
+            if (parentExists == null)
+                throw new Exception("Parent message not found in this chat.");
+        }
         
         var fileUrl = await fileStorageService.UploadFileAsync(request.FileStream, request.FileName, ct);
         
@@ -30,7 +39,8 @@ public class SendFileHandler(
             request.FileName,
             request.FileStream.Length,
             request.Type,
-            request.Description
+            request.Description,
+            request.ParentMessageId
         );
 
         await unitOfWork.Messages.AddAsync(message, ct);

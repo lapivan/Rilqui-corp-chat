@@ -39,9 +39,11 @@ public class MessageRepository(AppDbContext context) : RepositoryBase<Message>(c
             .ToListAsync(cancellationToken);
     }
 
+    
     public async Task<IReadOnlyList<Message>> GetPinnedMessagesAsync(Guid chatId, CancellationToken cancellationToken = default)
     {
         return await _entities
+            .Include(m => m.Sender)
             .Where(m => m.ChatId == chatId && m.IsPinned)
             .OrderByDescending(m => m.CreatedAt) 
             .ToListAsync(cancellationToken);

@@ -7,10 +7,8 @@ public class Message : BaseEntity
 {
     public string? Content { get; private set; }
     public bool IsPinned { get; private set; } = false;
-    
     public MessageType Type { get; private set; }
     public string? FileUrl { get; private set; }
-    
     public string? FileName { get; private set; }
     public long? FileSize { get; private set; }
     
@@ -25,7 +23,7 @@ public class Message : BaseEntity
 
     private Message() { }
     
-    public Message(string content, Guid senderId, Guid chatId)
+    public Message(string content, Guid senderId, Guid chatId, Guid? parentMessageId = null)
     {
         ValidateId(senderId, nameof(senderId));
         ValidateId(chatId, nameof(chatId));
@@ -33,10 +31,20 @@ public class Message : BaseEntity
         EditContent(content);
         SenderId = senderId;
         ChatId = chatId;
+        ParentMessageId = parentMessageId;
         Type = MessageType.Text;
+        CreatedAt = DateTime.UtcNow;
     }
     
-    public static Message CreateFileMessage(Guid senderId, Guid chatId, string fileUrl, string fileName, long fileSize, MessageType type, string? description = null)
+    public static Message CreateFileMessage(
+        Guid senderId, 
+        Guid chatId, 
+        string fileUrl, 
+        string fileName, 
+        long fileSize, 
+        MessageType type, 
+        string? description = null,
+        Guid? parentMessageId = null)
     {
         if (type == MessageType.Text) throw new ArgumentException("Use constructor for text messages.");
         
@@ -49,6 +57,7 @@ public class Message : BaseEntity
             FileSize = fileSize,
             Content = description,
             Type = type,
+            ParentMessageId = parentMessageId,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -60,25 +69,25 @@ public class Message : BaseEntity
 
     public void Pin()
     {
-        if (IsPinned) return;
         IsPinned = true;
         UpdatedAt = DateTime.UtcNow;
     }
 
     public void Unpin()
     {
-        if (!IsPinned) return;
         IsPinned = false;
         UpdatedAt = DateTime.UtcNow;
     }
-    public void SetReplyTo(Guid parentMessageId)
+
+    public void SetReplyTo(Guid? parentMessageId)
     {
         ParentMessageId = parentMessageId;
     }
 
     public void EditContent(string newContent)
     {
-        if (Type == MessageType.Text && string.IsNullOrWhiteSpace(newContent)) throw new ArgumentException("Text message cannot be empty.");
+        if (Type == MessageType.Text && string.IsNullOrWhiteSpace(newContent)) 
+            throw new ArgumentException("Text message cannot be empty.");
         Content = newContent;
         UpdatedAt = DateTime.UtcNow;
     }

@@ -7,7 +7,8 @@ namespace RilquiChat.Application.Features.Messages.Commands.DeleteMessage;
 public class DeleteMessageHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService, 
-    ISignalRService signalRService) : IRequestHandler<DeleteMessageCommand, Unit>
+    ISignalRService signalRService,
+    IFileStorageService fileStorageService) : IRequestHandler<DeleteMessageCommand, Unit>
 {
     public async Task<Unit> Handle(DeleteMessageCommand request, CancellationToken cancellationToken)
     {
@@ -18,8 +19,13 @@ public class DeleteMessageHandler(
         if (message == null) 
             throw new Exception("Message not found.");
 
-        if(message.SenderId != currentUserId) 
+        if (message.SenderId != currentUserId) 
             throw new Exception("Access denied. You can only delete your own messages.");
+        
+        if (!string.IsNullOrEmpty(message.FileUrl))
+        {
+            await fileStorageService.DeleteFileAsync(message.FileUrl, cancellationToken);
+        }
 
         await unitOfWork.Messages.DeleteAsync(message, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -10,4 +10,5 @@ public record SendFileCommand(
     string FileName,
     string ContentType,
     MessageType Type,   
-    string? Description = null) : IRequest<MessageDto>;
+    string? Description = null,
+    Guid? ParentMessageId = null) : IRequest<MessageDto>;

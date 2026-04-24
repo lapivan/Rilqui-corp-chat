@@ -40,7 +40,8 @@ public class MessagesController : BaseApiController
             request.File.FileName, 
             request.File.ContentType, 
             messageType, 
-            request.Description);
+            request.Description, 
+            request.ParentMessageId);
         
         return Ok(await Mediator.Send(command));
     }
@@ -88,5 +89,6 @@ public class MessagesController : BaseApiController
         public Guid ChatId { get; set; }
         public IFormFile File { get; set; } = null!;
         public string? Description { get; set; }
+        public Guid? ParentMessageId { get; set; }
     }
 }

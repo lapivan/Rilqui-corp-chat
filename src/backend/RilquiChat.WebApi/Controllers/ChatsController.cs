@@ -9,6 +9,7 @@ using RilquiChat.Application.Features.Chats.Commands.RemoveChatMember;
 using RilquiChat.Application.Features.Chats.Commands.RenameChat;
 using RilquiChat.Application.Features.Chats.Queries.GetChatDetails;
 using RilquiChat.Application.Features.Chats.Queries.GetUserChats;
+using RilquiChat.Application.Features.Messages.Queries.GetPinnedMessages;
 
 namespace RilquiChat.WebAPI.Controllers;
 
@@ -61,5 +62,10 @@ public class ChatsController : BaseApiController
     public async Task<ActionResult> MarkAsRead(Guid id)
     {
         return Ok(await Mediator.Send(new MarkAsReadCommand(id)));
+    }
+    [HttpGet("{id:guid}/pinned")]
+    public async Task<ActionResult<List<MessageDto>>> GetPinnedMessages(Guid id)
+    {
+        return Ok(await Mediator.Send(new GetPinnedMessagesQuery(id)));
     }
 }

@@ -23,6 +23,7 @@ public class ChatRepository(AppDbContext context) : RepositoryBase<Chat>(context
         return await _entities
             .Include(c => c.Members)
             .ThenInclude(m => m.User)
+            .Include(c => c.Messages) 
             .Where(c => c.Members.Any(m => m.UserId == userId))
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync(cancellationToken);
