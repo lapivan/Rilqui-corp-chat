@@ -15,4 +15,5 @@ public interface IChatClient
     Task MemberLeft(Guid chatId, string username);
     
     Task UserIsTyping(Guid chatId, string username);
+    Task ChatRemoved(Guid chatId);
 }

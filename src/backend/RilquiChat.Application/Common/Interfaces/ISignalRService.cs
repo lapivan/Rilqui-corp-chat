@@ -12,4 +12,7 @@ public interface ISignalRService
     Task NotifyChatCreatedAsync(Guid userId, ChatSummaryDto chat);
     Task NotifyChatRenameAsync(Guid chatId, string newName);
     Task NotifyMemberChangeAsync(Guid chatId, string username, bool joined);
+    Task SendMessageToParticipantsAsync(IEnumerable<Guid> userIds, MessageDto message);
+    Task NotifyMemberRemovedAsync(Guid chatId, Guid userId);
+    Task NotifyMemberAddedAsync(Guid userId, ChatSummaryDto chatSummary);
 }

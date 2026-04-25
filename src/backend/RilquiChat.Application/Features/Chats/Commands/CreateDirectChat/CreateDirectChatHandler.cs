@@ -40,11 +40,13 @@ public class CreateDirectChatHandler(
 
         await unitOfWork.Chats.AddAsync(newChat, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        return newChat.Adapt<ChatDetailDto>();
 
-        var chatWithData = await unitOfWork.Chats.GetByIdAsync(newChat.Id, cancellationToken);
-
-        await signalRService.NotifyChatCreatedAsync(request.PartnerId, chatWithData.Adapt<ChatSummaryDto>());
-
-        return chatWithData.Adapt<ChatDetailDto>();
+        // var chatWithData = await unitOfWork.Chats.GetByIdAsync(newChat.Id, cancellationToken);
+        //
+        // await signalRService.NotifyChatCreatedAsync(request.PartnerId, chatWithData.Adapt<ChatSummaryDto>());
+        //
+        // return chatWithData.Adapt<ChatDetailDto>();
     }
 }

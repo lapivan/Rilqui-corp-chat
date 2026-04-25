@@ -42,6 +42,10 @@ export interface MessageDto {
     fileUrl: string | null;
     fileName: string | null;
     fileSize: number | null;
+    
+    isSending?: boolean;
+    isError?: boolean;
+    tempId?: string;
 }
 
 export interface ChatMemberDto {
@@ -94,4 +98,11 @@ export interface UpdateProfileRequest {
 
 export interface AvatarResponse {
     url: string;
+}
+
+export interface SendFileRequest {
+    chatId: string;
+    file: File;
+    description?: string;
+    parentMessageId?: string;
 }

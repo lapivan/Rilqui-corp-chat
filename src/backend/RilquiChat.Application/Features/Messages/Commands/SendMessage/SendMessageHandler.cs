@@ -51,7 +51,8 @@ public class SendMessageHandler(
                 : null 
         };
 
-        await signalRService.SendMessageAsync(message.ChatId, dto);
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+        await signalRService.SendMessageToParticipantsAsync(memberIds, dto);
 
         return dto;
     }

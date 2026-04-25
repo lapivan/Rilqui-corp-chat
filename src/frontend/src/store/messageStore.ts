@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { MessageDto } from '../types';
+import { messageApi } from '../api/messageApi';
+import { useAuthStore } from './authStore';
 
 interface ChatMessages {
     items: MessageDto[];
@@ -14,9 +16,10 @@ interface MessageState {
     addMessage: (chatId: string, message: MessageDto) => void;
     updateMessage: (chatId: string, message: MessageDto) => void;
     deleteMessage: (chatId: string, messageId: string) => void;
+    sendOptimisticText: (chatId: string, content: string) => Promise<void>;
 }
 
-export const useMessageStore = create<MessageState>((set) => ({
+export const useMessageStore = create<MessageState>((set, get) => ({
     messagesByChat: {},
 
     setMessages: (chatId, items, hasMore) => set((state) => ({
@@ -32,6 +35,8 @@ export const useMessageStore = create<MessageState>((set) => ({
 
     addMessage: (chatId, message) => set((state) => {
         const chatData = state.messagesByChat[chatId] || { items: [], hasMore: false, oldestTimestamp: null };
+        if (chatData.items.some(m => m.id === message.id)) return state;
+        
         return {
             messagesByChat: {
                 ...state.messagesByChat,
@@ -65,7 +70,7 @@ export const useMessageStore = create<MessageState>((set) => ({
                 ...state.messagesByChat,
                 [chatId]: {
                     ...chatData,
-                    items: chatData.items.map(m => m.id === updatedMsg.id ? updatedMsg : m)
+                    items: chatData.items.map(m => (m.id === updatedMsg.id || (updatedMsg.tempId && m.tempId === updatedMsg.tempId)) ? updatedMsg : m)
                 }
             }
         };
@@ -83,5 +88,38 @@ export const useMessageStore = create<MessageState>((set) => ({
                 }
             }
         };
-    })
+    }),
+
+    sendOptimisticText: async (chatId, content) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+
+        const tempId = crypto.randomUUID();
+        const optimisticMsg: MessageDto = {
+            id: tempId,
+            tempId: tempId,
+            chatId,
+            senderId: user.id,
+            senderName: user.fullname || user.username,
+            content,
+            type: 0,
+            createdAt: new Date().toISOString(),
+            isPinned: false,
+            parentMessageId: null,
+            fileUrl: null,
+            fileName: null,
+            fileSize: null,
+            isSending: true
+        };
+
+        get().addMessage(chatId, optimisticMsg);
+
+        try {
+            const realMsg = await messageApi.sendText(chatId, content);
+            get().updateMessage(chatId, { ...realMsg, tempId });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+            get().updateMessage(chatId, { ...optimisticMsg, isSending: false, isError: true });
+        }
+    }
 }));

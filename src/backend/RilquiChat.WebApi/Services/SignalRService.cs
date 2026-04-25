@@ -30,4 +30,20 @@ public class SignalRService(IHubContext<ChatHub, IChatClient> hubContext) : ISig
         if (joined) await hubContext.Clients.Group(chatId.ToString()).MemberJoined(chatId, username);
         else await hubContext.Clients.Group(chatId.ToString()).MemberLeft(chatId, username);
     }
+    
+    public async Task SendMessageToParticipantsAsync(IEnumerable<Guid> userIds, MessageDto message)
+    {
+        var stringIds = userIds.Select(id => id.ToString()).ToList();
+        await hubContext.Clients.Users(stringIds).ReceiveMessage(message);
+    }
+
+    public async Task NotifyMemberRemovedAsync(Guid chatId, Guid userId)
+    {
+        await hubContext.Clients.User(userId.ToString()).ChatRemoved(chatId);
+    }
+
+    public async Task NotifyMemberAddedAsync(Guid userId, ChatSummaryDto chatSummary)
+    {
+        await hubContext.Clients.User(userId.ToString()).ChatCreated(chatSummary);
+    }
 }

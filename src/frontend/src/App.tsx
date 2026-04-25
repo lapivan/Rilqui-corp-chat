@@ -23,10 +23,10 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 
-                {/* <Route element={<ProtectedRoute />}>
+                <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<ChatPage />} />
-                </Route> */}
-                <Route path="/" element={<ChatPage />} />
+                </Route>
+                {/* <Route path="/" element={<ChatPage />} /> */}
 
                 {/* Catch all - Redirect to home */}
                 <Route path="*" element={<Navigate to="/" replace />} />

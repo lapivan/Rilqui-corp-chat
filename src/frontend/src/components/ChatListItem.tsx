@@ -1,5 +1,6 @@
 import type { ChatSummaryDto } from '../types';
 
+
 interface ChatListItemProps {
     chat: ChatSummaryDto;
     isActive: boolean;
