@@ -68,3 +68,30 @@ export interface ChatDetailDto {
     type: ChatType;
     members: ChatMemberDto[];
 }
+
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface RegisterRequest {
+    username: string;
+    email: string;
+    fullname: string;
+    password: string;
+}
+
+export interface AuthResponse {
+    user: UserDto;
+    token: string;
+}
+
+export interface UpdateProfileRequest {
+    fullname?: string;
+    username?: string;
+}
+
+export interface AvatarResponse {
+    url: string;
+}
