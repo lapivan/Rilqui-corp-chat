@@ -10,6 +10,7 @@ public record MessageDto(
     string? Content,
     MessageType Type,
     DateTime CreatedAt,
+    DateTime? UpdatedAt,
     bool IsPinned,
     Guid? ParentMessageId,
     string? FileUrl,

@@ -1,4 +1,5 @@
 import type { ChatSummaryDto } from '../types';
+import { Avatar } from './Avatar';
 
 
 interface ChatListItemProps {
@@ -15,9 +16,11 @@ export const ChatListItem = ({ chat, isActive, onClick }: ChatListItemProps) => 
                 ${isActive ? 'bg-blue-600 shadow-lg shadow-blue-600/20' : 'hover:bg-slate-800/50'}`}
         >
             <div className="relative flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold border border-slate-600/50">
-                    {chat.title?.charAt(0).toUpperCase() || '?'}
-                </div>
+                <Avatar 
+                    url={chat.avatarUrl} 
+                    name={chat.title || 'Chat'} 
+                    className="w-12 h-12" 
+                />
                 {chat.unreadCount > 0 && !isActive && (
                     <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-slate-900">
                         {chat.unreadCount}

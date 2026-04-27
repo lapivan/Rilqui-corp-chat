@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import { useChatPermissions } from '../hooks/useChatPermissions'; 
@@ -8,16 +8,17 @@ import { MessageContent } from './MessageContent';
 import { ChatSearch } from './ChatSearch';
 import { MessageInput } from './MessageInput';
 import { ChatInfoSidebar } from './ChatInfoSidebar';
-import { Loader2, Search, Lock, Pencil, Trash2, X, Pin, PinOff } from 'lucide-react';
+import { Loader2, Search, Lock, Pencil, Trash2, X, Pin, Reply as ReplyIcon } from 'lucide-react';
 import type { MessageDto, ChatMemberDto } from '../types'; 
 import { Avatar } from './Avatar';
+import { PinnedMessagesBar } from './PinnedMessagesBar';
 
 export const ChatWindow = () => {
     const { 
         activeChatId, chats, messages, pinnedMessages, fetchMessages, 
         hasMore, isLoading, initSignalR, disconnectFromChat,
         setChatDetails, resetUnreadCount, fetchChatDetails,
-        currentChatDetails 
+        currentChatDetails, setReplyToMessage
     } = useChatStore();
     
     const { user } = useAuthStore();
@@ -29,8 +30,7 @@ export const ChatWindow = () => {
     const [showInfo, setShowInfo] = useState(false);
     const [editingMessage, setEditingMessage] = useState<MessageDto | null>(null);
 
-    const currentChat = chats.find(c => c.id === activeChatId);
-    const lastPinnedMessage = pinnedMessages[pinnedMessages.length - 1];
+    const currentChat = useMemo(() => chats.find(c => c.id === activeChatId), [chats, activeChatId]);
 
     useEffect(() => {
         if (activeChatId) {
@@ -56,41 +56,40 @@ export const ChatWindow = () => {
     }, [activeChatId, initSignalR, disconnectFromChat, fetchMessages, setChatDetails, resetUnreadCount, fetchChatDetails]);
 
     useEffect(() => {
-        if (!scrollRef.current) return;
-        
         const container = scrollRef.current;
-        const isNearBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-
-        if (isInitialLoad && messages.length > 0) {
+        if (!container) return;
+        
+        if (isInitialLoad && messages.length > 0 && !isLoading) {
             container.scrollTop = container.scrollHeight;
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsInitialLoad(false);
-        } else if (isNearBottom && !isInitialLoad) {
-            setTimeout(() => {
-                container.scrollTop = container.scrollHeight;
-            }, 10);
+        } else if (!isInitialLoad && messages.length > 0) {
+            const isNearBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 150;
+            if (isNearBottom) {
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            }
         }
-    }, [messages, isInitialLoad]);
+    }, [messages, isInitialLoad, isLoading]);
 
     const handleScroll = async (e: React.UIEvent<HTMLDivElement>) => {
         const container = e.currentTarget;
-        if (container.scrollTop === 0 && hasMore && !isLoading && messages.length > 0) {
+        if (container.scrollTop === 0 && hasMore && !isLoading && messages.length > 0 && activeChatId) {
             const prevHeight = container.scrollHeight;
             const oldestMessageTimestamp = messages[0].createdAt;
-            await fetchMessages(activeChatId!, oldestMessageTimestamp);
-            setTimeout(() => {
+            await fetchMessages(activeChatId, oldestMessageTimestamp);
+            
+            requestAnimationFrame(() => {
                 container.scrollTop = container.scrollHeight - prevHeight;
-            }, 0);
+            });
         }
     };
 
     const handleDeleteMessage = async (id: string) => {
-        if (window.confirm("Delete this message?")) {
+        if (window.confirm("Удалить это сообщение?")) {
             try {
                 await messageApi.deleteMessage(id);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (err) {
-                alert("Failed to delete message");
+                console.error(err);
             }
         }
     };
@@ -102,9 +101,8 @@ export const ChatWindow = () => {
             } else {
                 await messageApi.pinMessage(message.id);
             }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
-            alert("Action failed");
+            console.error(err);
         }
     };
 
@@ -120,23 +118,22 @@ export const ChatWindow = () => {
     const formatDateSeparator = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
-        if (date.toDateString() === now.toDateString()) return 'Today';
+        if (date.toDateString() === now.toDateString()) return 'Сегодня';
         const yesterday = new Date();
         yesterday.setDate(now.getDate() - 1);
-        if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+        if (date.toDateString() === yesterday.toDateString()) return 'Вчера';
         return date.toLocaleDateString([], { day: 'numeric', month: 'long' });
     };
 
     if (!activeChatId) return (
         <div className="flex-1 flex items-center justify-center bg-slate-950/20">
-            <p className="text-slate-500">Select a chat to start messaging</p>
+            <p className="text-slate-500">Выберите чат для начала общения</p>
         </div>
     );
 
     return (
         <div className="flex-1 flex overflow-hidden bg-[#0b1120]">
             <div className="flex-1 flex flex-col min-w-0 relative h-full">
-                {/* HEADER */}
                 <div className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/30 backdrop-blur-sm z-30">
                     <div 
                         className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
@@ -148,8 +145,8 @@ export const ChatWindow = () => {
                             className="w-10 h-10 text-sm"
                         />
                         <div>
-                            <h3 className="text-sm font-bold text-white">{currentChat?.title || 'Chat'}</h3>
-                            <p className="text-[10px] text-green-500">online</p>
+                            <h3 className="text-sm font-bold text-white">{currentChat?.title || 'Чат'}</h3>
+                            <p className="text-[10px] text-green-500">в сети</p>
                         </div>
                     </div>
                     <button 
@@ -160,29 +157,14 @@ export const ChatWindow = () => {
                     </button>
                 </div>
 
-                {/* PINNED MESSAGES PANEL */}
-                {lastPinnedMessage && (
-                    <div className="bg-slate-900/50 border-b border-slate-800 px-6 py-2 flex items-center justify-between z-20 backdrop-blur-md">
-                        <div 
-                            className="flex items-center gap-3 cursor-pointer overflow-hidden flex-1"
-                            onClick={() => scrollToMessage(lastPinnedMessage.id)}
-                        >
-                            <div className="w-1 h-8 bg-blue-500 rounded-full flex-shrink-0" />
-                            <div className="flex flex-col overflow-hidden">
-                                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-tight">Pinned Message</span>
-                                <p className="text-xs text-slate-300 truncate">
-                                    {lastPinnedMessage.content || "Attachment"}
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => handleTogglePin(lastPinnedMessage)}
-                            className="ml-4 p-2 text-slate-500 hover:text-white transition-colors"
-                        >
-                            <PinOff size={16} />
-                        </button>
-                    </div>
-                )}
+                <PinnedMessagesBar 
+                    messages={pinnedMessages} 
+                    onUnpin={(id) => {
+                        const msg = pinnedMessages.find(m => m.id === id);
+                        if (msg) handleTogglePin(msg);
+                    }}
+                    onJump={scrollToMessage}
+                />
 
                 {isSearchOpen && (
                     <ChatSearch 
@@ -241,12 +223,18 @@ export const ChatWindow = () => {
                                         </div>
                                     )}
 
-                                    {/* MESSAGE ACTIONS */}
                                     <div className={`hidden group-hover:flex items-center gap-1 transition-all opacity-0 group-hover:opacity-100 ${isMe ? 'mr-2 order-first self-center' : 'ml-2 self-center'}`}>
+                                        <button 
+                                            onClick={() => setReplyToMessage(msg)} 
+                                            className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-blue-400"
+                                            title="Ответить"
+                                        >
+                                            <ReplyIcon size={14} />
+                                        </button>
                                         <button 
                                             onClick={() => handleTogglePin(msg)}
                                             className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${msg.isPinned ? 'text-blue-400' : 'text-slate-400 hover:text-blue-400'}`}
-                                            title={msg.isPinned ? "Unpin" : "Pin"}
+                                            title={msg.isPinned ? "Открепить" : "Закрепить"}
                                         >
                                             <Pin size={14} className={msg.isPinned ? 'fill-current' : ''} />
                                         </button>
@@ -256,12 +244,14 @@ export const ChatWindow = () => {
                                                 <button 
                                                     onClick={() => setEditingMessage(msg)}
                                                     className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-blue-400"
+                                                    title="Редактировать"
                                                 >
                                                     <Pencil size={14} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDeleteMessage(msg.id)}
                                                     className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-red-400"
+                                                    title="Удалить"
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>
@@ -274,7 +264,7 @@ export const ChatWindow = () => {
                                         ? 'bg-blue-600 text-white rounded-br-none' 
                                         : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/50'
                                     }`}>
-                                        {msg.isPinned && !lastPinnedMessage && (
+                                        {msg.isPinned && (
                                             <div className="flex items-center gap-1 text-[9px] text-blue-300 mb-1">
                                                 <Pin size={10} className="fill-current" />
                                                 <span>Pinned</span>
@@ -284,6 +274,19 @@ export const ChatWindow = () => {
                                             <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1 block">
                                                 {msg.senderName}
                                             </span>
+                                        )}
+                                        {msg.parentMessageId && (
+                                            <div 
+                                                onClick={() => scrollToMessage(msg.parentMessageId!)}
+                                                className="mb-2 p-2 bg-black/20 border-l-2 border-blue-500 rounded cursor-pointer hover:bg-black/30 transition-colors overflow-hidden"
+                                            >
+                                                <p className="text-[10px] font-bold text-blue-400 uppercase">
+                                                    Ответ на сообщение
+                                                </p>
+                                                <p className="text-xs text-slate-300 truncate">
+                                                    {messages.find(m => m.id === msg.parentMessageId)?.content || "Сообщение..."}
+                                                </p>
+                                            </div>
                                         )}
                                         <MessageContent message={msg} />
                                         <div className={`text-[10px] mt-1 opacity-50 flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -301,7 +304,7 @@ export const ChatWindow = () => {
                         <div className="px-6 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2 text-blue-400">
                                 <Pencil size={12} />
-                                <span>Editing message...</span>
+                                <span>Редактирование...</span>
                             </div>
                             <button onClick={() => setEditingMessage(null)} className="text-slate-500 hover:text-white">
                                 <X size={14} />
@@ -318,7 +321,7 @@ export const ChatWindow = () => {
                     ) : (
                         <div className="p-4 bg-slate-900/80 border-t border-slate-800 flex items-center justify-center gap-2 text-slate-500 italic text-sm">
                             <Lock size={14} />
-                            {isChannel ? "Only administrators can post" : "Messaging restricted"}
+                            {isChannel ? "Только администраторы могут писать" : "Отправка сообщений ограничена"}
                         </div>
                     )}
                 </div>

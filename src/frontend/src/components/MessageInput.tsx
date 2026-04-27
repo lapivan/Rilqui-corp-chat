@@ -18,7 +18,7 @@ export const MessageInput = ({ chatId, editMode, onEditComplete }: MessageInputP
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     
-    const { connection } = useChatStore();
+    const { connection, replyToMessage, setReplyToMessage } = useChatStore();
     const { sendOptimisticText } = useMessageStore();
 
     useEffect(() => {
@@ -39,45 +39,44 @@ export const MessageInput = ({ chatId, editMode, onEditComplete }: MessageInputP
         if ((!text.trim() && !file) || isSending) return;
 
         const messageText = text.trim();
+        const parentId = replyToMessage?.id;
         
-        if (editMode) {
-            setIsSending(true);
-            try {
+        setIsSending(true);
+        try {
+            if (editMode) {
                 await messageApi.editMessage(editMode.id, messageText);
                 onEditComplete();
                 setText('');
-            } catch (error) {
-                console.error("Failed to edit message", error);
-            } finally {
-                setIsSending(false);
-            }
-        } else if (file) {
-            setIsSending(true);
-            try {
+            } else if (file) {
                 await messageApi.sendFile({
                     chatId,
                     file,
-                    description: messageText || undefined
+                    description: messageText || undefined,
+                    parentMessageId: parentId
                 });
                 setFile(null);
                 setText('');
-            } catch (error) {
-                console.error("Failed to send file", error);
-            } finally {
-                setIsSending(false);
+                setReplyToMessage(null);
+            } else {
+                setText('');
+                setReplyToMessage(null);
+                await sendOptimisticText(chatId, messageText, parentId);
             }
-        } else {
-            setText('');
-            await sendOptimisticText(chatId, messageText);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsSending(false);
+            if (textareaRef.current) textareaRef.current.style.height = 'auto';
         }
-
-        if (textareaRef.current) textareaRef.current.style.height = 'auto';
     };
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        }
+        if (e.key === 'Escape') {
+            setReplyToMessage(null);
         }
         if (connection && text.length > 0 && text.length % 5 === 0 && !editMode) {
             connection.invoke("SendTyping", chatId);
@@ -86,6 +85,18 @@ export const MessageInput = ({ chatId, editMode, onEditComplete }: MessageInputP
 
     return (
         <div className="p-4 bg-slate-900/50 border-t border-slate-800">
+            {replyToMessage && (
+                <div className="mb-2 p-2 bg-slate-800/80 rounded-lg flex items-center justify-between border-l-4 border-blue-500 animate-in slide-in-from-bottom-1">
+                    <div className="flex flex-col min-w-0 px-2">
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Replying to {replyToMessage.senderName}</span>
+                        <p className="text-xs text-slate-300 truncate">{replyToMessage.content || "Attachment"}</p>
+                    </div>
+                    <button onClick={() => setReplyToMessage(null)} className="text-slate-500 hover:text-white p-1">
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
+
             {file && (
                 <div className="mb-2 p-2 bg-slate-800 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex items-center gap-2 overflow-hidden">

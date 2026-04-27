@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, Settings, Users, X, Loader2, Plus } from 'lucide-react';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
@@ -10,12 +10,16 @@ import type { UserDto } from '../types';
 import { SettingsModal } from './SettingsModal';
 import { CreateChatModal } from '../components/CreateChatModal';
 import { Avatar } from './Avatar';
+import { ChatType } from '../types';
+
+type TabType = 'All' | 'Personal' | 'Groups';
 
 export const Sidebar = () => {
     const { chats, activeChatId, setActiveChat, isLoading: chatsLoading, createDirectChat, fetchChats } = useChatStore();
     const { user: currentUser } = useAuthStore();
     
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState<TabType>('All');
     const debouncedSearch = useDebounce(searchTerm, 400);
     
     const [searchResults, setSearchResults] = useState<UserDto[]>([]);
@@ -32,7 +36,8 @@ export const Sidebar = () => {
 
     useEffect(() => {
         const performSearch = async () => {
-            if (!debouncedSearch.trim()) {
+            // Исправляем UX: если меньше 2 символов, просто очищаем результаты и не делаем запрос
+            if (debouncedSearch.trim().length < 2) {
                 setSearchResults([]);
                 return;
             }
@@ -43,6 +48,7 @@ export const Sidebar = () => {
                 setSearchResults(users.filter(u => u.id !== currentUser?.id));
             } catch (error) {
                 console.error("Search failed", error);
+                setSearchResults([]);
             } finally {
                 setIsSearching(false);
             }
@@ -50,6 +56,21 @@ export const Sidebar = () => {
 
         performSearch();
     }, [debouncedSearch, currentUser?.id]);
+
+    // Логика фильтрации вкладок
+    const filteredChats = useMemo(() => {
+        const sorted = [...chats].sort((a, b) => 
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+
+        if (activeTab === 'Personal') {
+            return sorted.filter(chat => chat.type === ChatType.Direct);
+        }
+        if (activeTab === 'Groups') {
+            return sorted.filter(chat => chat.type === ChatType.Group || chat.type === ChatType.Channel);
+        }
+        return sorted;
+    }, [chats, activeTab]);
 
     const handleSelectUser = async (user: UserDto) => {
         setIsCreatingChat(true);
@@ -73,11 +94,10 @@ export const Sidebar = () => {
                                 onClick={() => setIsSettingsOpen(true)}
                                 className="cursor-pointer hover:ring-2 ring-blue-500 transition-all shadow-lg rounded-xl overflow-hidden flex-shrink-0"
                             >
-                                {/* Используем Avatar для текущего пользователя */}
                                 <Avatar 
                                     url={currentUser?.avatarUrl} 
                                     name={currentUser?.fullname || 'U'} 
-                                    className="w-10 h-10 rounded-xl" // Оставляем скругленные углы как было у тебя
+                                    className="w-10 h-10 rounded-xl"
                                 />
                             </div>
                             <h2 className="text-xl font-bold text-white tracking-tight">Chats</h2>
@@ -101,7 +121,7 @@ export const Sidebar = () => {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search conversations..."
+                            placeholder="Search users..."
                             className="w-full bg-slate-800/50 border border-slate-700/50 focus:border-blue-500/50 text-slate-200 text-sm rounded-xl py-2.5 pl-10 pr-10 outline-none transition-all focus:ring-4 focus:ring-blue-500/5"
                         />
                         {searchTerm && (
@@ -117,10 +137,14 @@ export const Sidebar = () => {
 
                 {!searchTerm && (
                     <div className="flex px-4 gap-6 border-b border-slate-800/50 overflow-x-auto no-scrollbar">
-                        {['All', 'Personal', 'Groups'].map((tab, i) => (
-                            <button key={tab} className={`pb-3 text-sm font-semibold transition-all relative ${i === 0 ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                        {(['All', 'Personal', 'Groups'] as TabType[]).map((tab) => (
+                            <button 
+                                key={tab} 
+                                onClick={() => setActiveTab(tab)}
+                                className={`pb-3 text-sm font-semibold transition-all relative ${activeTab === tab ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
+                            >
                                 {tab}
-                                {i === 0 && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400 rounded-full" />}
+                                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400 rounded-full" />}
                             </button>
                         ))}
                     </div>
@@ -142,7 +166,9 @@ export const Sidebar = () => {
                                     />
                                 ))
                             ) : (
-                                <div className="text-center p-8 text-slate-500 text-sm">Пользователь не найден</div>
+                                <div className="text-center p-8 text-slate-500 text-sm">
+                                    {searchTerm.length < 2 ? 'Type at least 2 characters' : 'User not found'}
+                                </div>
                             )}
                         </div>
                     ) : (
@@ -159,23 +185,21 @@ export const Sidebar = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : chats.length > 0 ? (
-                                [...chats]
-                                    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-                                    .map(chat => (
-                                        <ChatListItem 
-                                            key={chat.id}
-                                            chat={chat}
-                                            isActive={activeChatId === chat.id}
-                                            onClick={() => setActiveChat(chat.id)}
-                                        />
-                                    ))
+                            ) : filteredChats.length > 0 ? (
+                                filteredChats.map(chat => (
+                                    <ChatListItem 
+                                        key={chat.id}
+                                        chat={chat}
+                                        isActive={activeChatId === chat.id}
+                                        onClick={() => setActiveChat(chat.id)}
+                                    />
+                                ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-600 px-8 text-center space-y-3">
                                     <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center">
                                         <Users size={32} className="opacity-20" />
                                     </div>
-                                    <p className="text-sm">No conversations yet.</p>
+                                    <p className="text-sm">No {activeTab.toLowerCase()} conversations yet.</p>
                                 </div>
                             )}
                         </>

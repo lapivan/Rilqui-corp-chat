@@ -37,6 +37,7 @@ export interface MessageDto {
     content: string | null;
     type: MessageType;
     createdAt: string;
+    updatedAt?: string | null;
     isPinned: boolean;
     parentMessageId: string | null;
     fileUrl: string | null;
@@ -60,6 +61,7 @@ export interface ChatMemberDto {
 export interface ChatSummaryDto {
     id: string;
     title: string | null;
+    avatarUrl: string | null; 
     type: ChatType;
     updatedAt: string;
     lastMessage: MessageDto | null;

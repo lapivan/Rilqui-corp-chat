@@ -9,7 +9,7 @@ public class User : BaseEntity
     public string Fullname { get; private set; }
     public string Email { get; private set; }
     public UserRole Role { get; private set; }
-    public string? AvatarUrl { get; private set; } // Вернул private set для соблюдения инкапсуляции
+    public string? AvatarUrl { get; private set; }
 
     private readonly List<ChatMember> _chatMembers = new();
     public virtual IReadOnlyCollection<ChatMember> ChatMembers => _chatMembers.AsReadOnly();

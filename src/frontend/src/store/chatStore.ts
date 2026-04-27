@@ -9,7 +9,7 @@ import { useAuthStore } from './authStore';
 interface ChatState {
     chats: ChatSummaryDto[];
     messages: MessageDto[];
-    pinnedMessages: MessageDto[]; // Список закрепленных сообщений
+    pinnedMessages: MessageDto[];
     connection: signalR.HubConnection | null;
     hasMore: boolean;
     activeChatId: string | null;
@@ -36,6 +36,8 @@ interface ChatState {
     renameChat: (chatId: string, newName: string) => Promise<void>;
     addMember: (chatId: string, userId: string) => Promise<void>;
     removeMember: (chatId: string, userId: string) => Promise<void>;
+    replyToMessage: MessageDto | null;
+    setReplyToMessage: (message: MessageDto | null) => void;
     sendTyping: (chatId: string) => Promise<void>;
 }
 
@@ -138,6 +140,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
+    replyToMessage: null,
+    setReplyToMessage: (message) => set({ replyToMessage: message }),
+
     renameChat: async (chatId: string, newName: string) => {
         try {
             await chatApi.renameChat(chatId, newName);
@@ -151,10 +156,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         try {
             const chatDetail = await chatApi.createDirectChat(partnerId);
             const existingChat = get().chats.find(c => c.id === chatDetail.id);
+            
             if (!existingChat) {
+                const partner = chatDetail.members.find(m => m.userId === partnerId);
+                
                 const newChatSummary: ChatSummaryDto = {
                     id: chatDetail.id,
                     title: chatDetail.title, 
+                    avatarUrl: partner?.avatarUrl || null, 
                     type: chatDetail.type,
                     updatedAt: new Date().toISOString(),
                     lastMessage: null,
@@ -174,6 +183,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const newChatSummary: ChatSummaryDto = {
                 id: chatDetail.id,
                 title: chatDetail.title,
+                avatarUrl: null, 
                 type: chatDetail.type,
                 updatedAt: new Date().toISOString(),
                 lastMessage: null,
@@ -255,10 +265,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
             if (msgChatId === activeId) {
                 set(state => {
-                    // Обновляем в основном списке сообщений
                     const newMessages = state.messages.map(m => m.id === updatedMsg.id ? updatedMsg : m);
-                    
-                    // Обновляем список закрепов
                     let newPinned = [...state.pinnedMessages];
                     if (updatedMsg.isPinned) {
                         const exists = newPinned.find(p => p.id === updatedMsg.id);
@@ -280,7 +287,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 });
             }
             
-            // Обновляем превью в списке чатов
             set(state => ({
                 chats: state.chats.map(c => 
                     c.id.toLowerCase() === msgChatId ? { ...c, lastMessage: updatedMsg } : c

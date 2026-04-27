@@ -70,7 +70,12 @@ public static class DependencyInjection
                 : 0)
             .Map(dest => dest.Title, src => src.Type == ChatType.Direct && string.IsNullOrEmpty(src.Title)
                 ? GetDirectChatTitle(src, (Guid)MapContext.Current!.Parameters["UserId"])
-                : src.Title);
+                : src.Title)
+        
+            .Map(dest => dest.AvatarUrl, src => src.Type == ChatType.Direct 
+            ? src.Members.FirstOrDefault(m => m.UserId != (Guid)MapContext.Current!.Parameters["UserId"])!.User.AvatarUrl 
+            : null);
+        
         return services;
     }
     

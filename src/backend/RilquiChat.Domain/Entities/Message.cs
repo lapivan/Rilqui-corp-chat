@@ -34,6 +34,7 @@ public class Message : BaseEntity
         ParentMessageId = parentMessageId;
         Type = MessageType.Text;
         CreatedAt = DateTime.UtcNow;
+        UpdatedAt =  CreatedAt;
     }
     
     public static Message CreateFileMessage(
@@ -70,13 +71,11 @@ public class Message : BaseEntity
     public void Pin()
     {
         IsPinned = true;
-        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Unpin()
     {
         IsPinned = false;
-        UpdatedAt = DateTime.UtcNow;
     }
 
     public void SetReplyTo(Guid? parentMessageId)

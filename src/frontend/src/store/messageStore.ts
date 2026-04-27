@@ -16,7 +16,7 @@ interface MessageState {
     addMessage: (chatId: string, message: MessageDto) => void;
     updateMessage: (chatId: string, message: MessageDto) => void;
     deleteMessage: (chatId: string, messageId: string) => void;
-    sendOptimisticText: (chatId: string, content: string) => Promise<void>;
+    sendOptimisticText: (chatId: string, content: string, parentMessageId?: string) => Promise<void>;
 }
 
 export const useMessageStore = create<MessageState>((set, get) => ({
@@ -90,7 +90,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         };
     }),
 
-    sendOptimisticText: async (chatId, content) => {
+    sendOptimisticText: async (chatId, content, parentMessageId) => {
         const user = useAuthStore.getState().user;
         if (!user) return;
 
@@ -105,7 +105,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
             type: 0,
             createdAt: new Date().toISOString(),
             isPinned: false,
-            parentMessageId: null,
+            parentMessageId: parentMessageId || null,
             fileUrl: null,
             fileName: null,
             fileSize: null,
@@ -115,7 +115,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         get().addMessage(chatId, optimisticMsg);
 
         try {
-            const realMsg = await messageApi.sendText(chatId, content);
+            const realMsg = await messageApi.sendText(chatId, content, parentMessageId);
             get().updateMessage(chatId, { ...realMsg, tempId });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {

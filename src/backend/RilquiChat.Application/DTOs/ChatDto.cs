@@ -5,6 +5,7 @@ namespace RilquiChat.Application.DTOs;
 public record ChatSummaryDto(
     Guid Id,
     string? Title,
+    string? AvatarUrl,
     ChatType Type,
     DateTime UpdatedAt,
     MessageDto? LastMessage,
