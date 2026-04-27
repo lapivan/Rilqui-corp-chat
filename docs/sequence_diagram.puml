@@ -1,0 +1,55 @@
+@startuml sequence
+!theme plain
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam MaxMessageSize 200
+
+title Сценарий: Отправка сообщения (Sequence Diagram)
+
+actor "User (React)" as User
+participant "MessagesController" as Controller <<WebApi>>
+participant "MediatR" as Mediator <<Library>>
+participant "SendMessageHandler" as Handler <<Application>>
+participant "MessageRepository" as Repo <<Infrastructure>>
+participant "UnitOfWork" as UoW <<Infrastructure>>
+database "PostgreSQL" as DB
+participant "SignalR Hub" as Hub <<SignalR>>
+
+User -> Controller : POST /api/messages (JSON + JWT)
+activate Controller
+
+Controller -> Mediator : Send(SendMessageCommand)
+activate Mediator
+
+Mediator -> Handler : Handle()
+activate Handler
+
+Handler -> Repo : Add(Message)
+activate Repo
+Repo --> Handler : Message entity
+deactivate Repo
+
+Handler -> UoW : SaveChangesAsync()
+activate UoW
+UoW -> DB : INSERT INTO Messages
+activate DB
+DB --> UoW : Success
+deactivate DB
+UoW --> Handler : Transaction committed
+deactivate UoW
+
+Handler -> Hub : SendMessageToClients(MessageDto)
+activate Hub
+Hub --[#blue]> User : ReceiveMessage
+deactivate Hub
+
+Handler --> Mediator : MessageDto
+deactivate Handler
+
+Mediator --> Controller : MessageDto
+deactivate Mediator
+
+Controller --> User : 200 OK (MessageDto)
+deactivate Controller
+
+@enduml

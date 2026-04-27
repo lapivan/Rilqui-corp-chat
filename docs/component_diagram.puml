@@ -1,0 +1,50 @@
+@startuml components
+!theme plain
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title Структура программного комплекса корпоративного мессенджера
+
+package "Client Side (React SPA)" {
+    component [Client Application] as UI <<React>>
+    component [State Management] as Store <<Zustand>>
+    component [API Client] as Axios <<Axios>>
+}
+
+package "Server Side (ASP.NET Core)" {
+    package "WebAPI Layer" {
+        component [Controllers] as Controllers
+        component [JWT Middleware] as Auth
+        component [SignalR Hub] as Hub
+    }
+    
+    package "Application Layer (CQRS)" {
+        component [Commands / Queries] as CQRS
+    }
+    
+    package "Infrastructure Layer" {
+        component [Identity / Security] as Identity
+        component [Entity Framework Core] as EF
+    }
+}
+
+database "PostgreSQL" {
+    storage "Database" as DB
+}
+
+UI --> Store : State updates
+Store --> Axios : HTTP requests
+Axios --> Controllers : HTTP / JSON (JWT)
+
+UI <--> Hub : WebSocket / Realtime
+
+Controllers --> CQRS : MediatR
+Auth --> Controllers : Authorization
+
+CQRS --> EF : Data access
+CQRS --> Identity : Auth checks
+
+EF --> DB : SQL
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml er-diagram
+!theme plain
+skinparam shadowing false
+skinparam linetype ortho
+
+title ER-диаграмма базы данных корпоративного мессенджера
+
+entity "Users (DomainUsers)" as User {
+  + Id : GUID <<PK>>
+  --
+  Username : string <<unique>>
+  Fullname : string
+  Email : string <<unique>>
+  Role : int
+  AvatarUrl : string?
+  CreatedAt : datetime
+  UpdatedAt : datetime?
+}
+
+entity "Chats" as Chat {
+  + Id : GUID <<PK>>
+  --
+  Title : string?
+  Type : int
+  CreatedAt : datetime
+  UpdatedAt : datetime?
+}
+
+entity "ChatMembers" as ChatMember {
+  + Id : GUID <<PK>>
+  --
+  UserId : GUID <<FK>>
+  ChatId : GUID <<FK>>
+  Role : int
+  JoinedAt : datetime
+  LastReadMessageId : GUID?
+  LastReadAt : datetime
+}
+
+entity "Messages" as Message {
+  + Id : GUID <<PK>>
+  --
+  Content : string?
+  Type : int
+  IsPinned : bool
+  FileUrl : string?
+  FileName : string?
+  FileSize : long?
+  SenderId : GUID <<FK>>
+  ChatId : GUID <<FK>>
+  ParentMessageId : GUID? <<FK>>
+  CreatedAt : datetime
+  UpdatedAt : datetime?
+}
+
+' =========================
+' Связи
+' =========================
+
+User ||--o{ ChatMember : participates
+Chat ||--o{ ChatMember : has
+
+Chat ||--o{ Message : contains
+User ||--o{ Message : sends
+
+Message ||--o{ Message : reply_to
+
+ChatMember }o--|| Message : last_read
+
+@enduml

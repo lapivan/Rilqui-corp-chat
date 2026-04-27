@@ -59,7 +59,7 @@ export const RegisterPage = () => {
                         <Input
                             label="Full Name"
                             name="fullname"
-                            placeholder="Ivan Lapunov"
+                            placeholder="Full Name"
                             value={formData.fullname}
                             onChange={handleChange}
                             required
@@ -68,7 +68,7 @@ export const RegisterPage = () => {
                             <Input
                                 label="Username"
                                 name="username"
-                                placeholder="vanya_dev"
+                                placeholder="Username"
                                 value={formData.username}
                                 onChange={handleChange}
                                 required

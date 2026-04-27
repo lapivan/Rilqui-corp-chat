@@ -9,7 +9,7 @@ import { userApi } from '../api/userApi';
 import type { UserDto } from '../types';
 import { SettingsModal } from './SettingsModal';
 import { CreateChatModal } from '../components/CreateChatModal';
-import { Avatar } from './Avatar'; // <-- Импортируем Avatar
+import { Avatar } from './Avatar';
 
 export const Sidebar = () => {
     const { chats, activeChatId, setActiveChat, isLoading: chatsLoading, createDirectChat, fetchChats } = useChatStore();
