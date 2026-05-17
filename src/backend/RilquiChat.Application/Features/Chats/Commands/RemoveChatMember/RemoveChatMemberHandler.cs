@@ -32,7 +32,11 @@ public class RemoveChatMemberHandler(
         unitOfWork.ChatMembers.Remove(memberToRemove);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         
-        await signalRService.NotifyMemberChangeAsync(request.ChatId, usernameForNotify, false);
+        var chat = await unitOfWork.Chats.GetByIdAsync(request.ChatId, cancellationToken, c => c.Members);
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+
+        await signalRService.NotifyMemberChangeAsync(memberIds, request.ChatId, usernameForNotify, false);
+        await signalRService.NotifyMemberRemovedAsync(request.ChatId, request.UserId);
 
         return Unit.Value;
     }

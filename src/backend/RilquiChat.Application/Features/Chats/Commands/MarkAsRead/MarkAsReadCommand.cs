@@ -30,7 +30,8 @@ public class MarkAsReadHandler(
         
         await unitOfWork.SaveChangesAsync(ct);
         
-        await signalRService.SendMessagesReadAsync(request.ChatId, currentUserId, DateTime.UtcNow);
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+        await signalRService.SendMessagesReadAsync(memberIds, request.ChatId, currentUserId, DateTime.UtcNow);
 
         return Unit.Value;
     }

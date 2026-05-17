@@ -7,7 +7,7 @@ public record ChatSummaryDto(
     string? Title,
     string? AvatarUrl,
     ChatType Type,
-    DateTime UpdatedAt,
+    DateTime? UpdatedAt,
     MessageDto? LastMessage,
     int UnreadCount);
     

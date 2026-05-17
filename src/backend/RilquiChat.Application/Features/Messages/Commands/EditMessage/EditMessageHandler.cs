@@ -37,7 +37,10 @@ public class EditMessageHandler(
                 : null 
         };
         
-        await signalRService.SendUpdateAsync(message.ChatId, dto);
+        var chat = await unitOfWork.Chats.GetByIdAsync(message.ChatId, cancellationToken, c => c.Members);
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+
+        await signalRService.SendUpdateAsync(memberIds, dto);
         
         return dto;
     }

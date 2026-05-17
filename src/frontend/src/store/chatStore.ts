@@ -5,6 +5,7 @@ import { messageApi } from '../api/messageApi';
 import { ChatType } from '../types';
 import { chatApi } from '../api/chatApi';
 import { useAuthStore } from './authStore';
+import { useMessageStore } from './messageStore';
 
 interface ChatState {
     chats: ChatSummaryDto[];
@@ -59,10 +60,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const oldChatId = get().activeChatId;
         const conn = get().connection;
     
-        // 1. Оптимистично меняем чат и сбрасываем старые сообщения, чтобы не было прыжков
         set({ activeChatId: chatId, messages: [], pinnedMessages: [], hasMore: true });
     
-        // 2. Бесшовно переключаем комнаты в SignalR, если сокет активен
         if (conn && conn.state === signalR.HubConnectionState.Connected) {
             try {
                 if (oldChatId) {
@@ -73,12 +72,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 console.error("SignalR room switching error:", err);
             }
         }
-    
-        // 3. Запускаем загрузку данных (базовые данные, детали И закрепленные сообщения)
+
         await Promise.all([
             get().fetchMessages(chatId),
             get().fetchChatDetails(chatId),
-            get().fetchPinnedMessages(chatId) // <-- ВОЗВРАЩАЕМ ПОДГРУЗКУ ЗАКРЕПОВ
+            get().fetchPinnedMessages(chatId)
         ]);
     },
 
@@ -243,8 +241,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     initSignalR: async () => {
-        // Если соединение уже создано и работает — ничего не делаем, выходим
-        if (get().connection && get().connection?.state === signalR.HubConnectionState.Connected) {
+        // 1. Если соединение уже инициализировано (не важно, стартует оно или уже подключено) — жестко выходим
+        if (get().connection) {
             return;
         }
     
@@ -256,26 +254,100 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .withAutomaticReconnect()
             .build();
     
+        // 2. СИНХРОННО пишем ссылку на сокет в стейт ДО вызова await!
+        // Теперь любой повторный вызов initSignalR споткнется о верхнюю проверку
+        set({ connection });
+    
+        // Навешиваем обработчики событий
         connection.on("ReceiveMessage", (message: MessageDto) => {
-            get().updateChatLastMessage(message.chatId, message);
-            if (message.chatId.toLowerCase() === get().activeChatId?.toLowerCase()) {
+            const msgChatId = message.chatId.toLowerCase();
+            const isActiveChat = msgChatId === get().activeChatId?.toLowerCase();
+    
+            useMessageStore.getState().addMessage(message.chatId, message);
+        
+            if (isActiveChat) {
                 get().addMessage(message);
-            } else {
-                get().incrementUnreadCount(message.chatId);
             }
+        
+            set((state) => {
+                const getChatTimestamp = (c: ChatSummaryDto) => 
+                    c.lastMessage ? new Date(c.lastMessage.createdAt).getTime() : new Date(c.updatedAt).getTime();
+        
+                const updatedChats = state.chats.map((chat) => {
+                    if (chat.id.toLowerCase() !== msgChatId) {
+                        return chat;
+                    }
+        
+                    const newUnreadCount = isActiveChat ? chat.unreadCount : chat.unreadCount + 1;
+        
+                    return { 
+                        ...chat, 
+                        lastMessage: message, 
+                        updatedAt: message.createdAt,
+                        unreadCount: newUnreadCount
+                    };
+                });
+        
+                return {
+                    chats: updatedChats.sort((a, b) => getChatTimestamp(b) - getChatTimestamp(a))
+                };
+            });
         });
     
-        connection.on("MessageDeleted", (_cId, mId) => {
-            set(state => ({ 
-                messages: state.messages.filter(m => m.id !== mId),
-                pinnedMessages: state.pinnedMessages.filter(m => m.id !== mId)
-            }));
+        connection.on("MessageDeleted", (chatId: string, mId: string, nextLastMessage: MessageDto | null) => {
+            const cIdLower = chatId.toLowerCase();
+            const isActiveChat = cIdLower === get().activeChatId?.toLowerCase();
+        
+            useMessageStore.getState().deleteMessage(chatId, mId);
+        
+            set(state => {
+                const updatedMessages = state.messages.filter(m => m.id !== mId);
+                const updatedPinned = state.pinnedMessages.filter(m => m.id !== mId);
+        
+                const updatedChats = state.chats.map(chat => {
+                    if (chat.id.toLowerCase() !== cIdLower) return chat;
+        
+                    const newUnreadCount = isActiveChat 
+                        ? 0 
+                        : Math.max(0, chat.unreadCount - 1);
+        
+                    if (chat.lastMessage?.id !== mId) {
+                        return {
+                            ...chat,
+                            unreadCount: newUnreadCount
+                        };
+                    }
+        
+                    const newLastMessage = nextLastMessage;
+                    const newUpdatedAt = newLastMessage ? newLastMessage.createdAt : chat.updatedAt;
+        
+                    return {
+                        ...chat,
+                        lastMessage: newLastMessage,
+                        updatedAt: newUpdatedAt,
+                        unreadCount: newUnreadCount
+                    };
+                });
+        
+                const getChatTimestamp = (c: ChatSummaryDto) => 
+                    c.lastMessage ? new Date(c.lastMessage.createdAt).getTime() : new Date(c.updatedAt).getTime();
+        
+                const sortedChats = [...updatedChats].sort((a, b) => getChatTimestamp(b) - getChatTimestamp(a));
+        
+                return {
+                    messages: updatedMessages,
+                    pinnedMessages: updatedPinned,
+                    chats: sortedChats
+                };
+            });
         });
-    
+        
         connection.on("MessageUpdated", (updatedMsg: MessageDto) => {
             const activeId = get().activeChatId?.toLowerCase();
             const msgChatId = updatedMsg.chatId.toLowerCase();
-    
+        
+            useMessageStore.getState().updateMessage(updatedMsg.chatId, updatedMsg);
+        
             if (msgChatId === activeId) {
                 set(state => {
                     const newMessages = state.messages.map(m => m.id === updatedMsg.id ? updatedMsg : m);
@@ -292,7 +364,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     } else {
                         newPinned = newPinned.filter(p => p.id !== updatedMsg.id);
                     }
-    
+        
                     return { 
                         messages: newMessages, 
                         pinnedMessages: newPinned 
@@ -306,7 +378,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 )
             }));
         });
-    
+        
         connection.on("ChatUpdated", (id: string, newName: string) => {
             set(state => ({
                 chats: state.chats.map(c => c.id === id ? { ...c, title: newName } : c),
@@ -316,14 +388,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     ? { ...state.currentChatDetails, title: newName } : state.currentChatDetails
             }));
         });
-    
+        
         connection.on("ChatCreated", (newChat: ChatSummaryDto) => {
             set(state => {
                 if (state.chats.some(c => c.id === newChat.id)) return state;
                 return { chats: [newChat, ...state.chats] };
             });
         });
-    
+        
         connection.on("ChatRemoved", (chatId: string) => {
             const isCurrent = get().activeChatId?.toLowerCase() === chatId.toLowerCase();
             set(state => ({
@@ -335,24 +407,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 pinnedMessages: isCurrent ? [] : state.pinnedMessages
             }));
         });
-    
+        
         connection.on("MessagesRead", (chatId: string, readerId: string) => {
             if (readerId === useAuthStore.getState().user?.id) {
                 get().resetUnreadCount(chatId);
             }
         });
     
+        // 3. Запускаем само подключение к серверу
         try {
             await connection.start();
-            set({ connection });
-            
-            // Если при старте сокета уже выбран какой-то чат, сразу входим в него
+    
             const currentActive = get().activeChatId;
             if (currentActive) {
                 await connection.invoke("JoinChat", currentActive);
             }
         } catch (err) {
             console.error("SignalR Connection Error: ", err);
+            // Если при старте произошел сбой — сбрасываем коннект в null, чтобы дать шанс следующей попытке
+            set({ connection: null });
         }
     },
     
@@ -360,13 +433,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const conn = get().connection;
         if (conn && conn.state === signalR.HubConnectionState.Connected) {
             try {
-                // Просто выходим из комнаты на бэке, но НЕ закрываем сам сокет!
                 await conn.invoke("LeaveChat", chatId);
             } catch (err) {
                 console.error("Error leaving chat room:", err);
             }
         }
-        // Чистим стейты сообщений локально
+
         set({ messages: [], pinnedMessages: [], activeChatId: null });
     },
 

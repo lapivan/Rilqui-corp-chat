@@ -305,7 +305,7 @@ export const ChatWindow = () => {
                                                     // Сжали блок ответа на сообщение (отступы p-2 -> p-1.5, маргин mb-2 -> mb-1)
                                                     <div 
                                                         onClick={() => scrollToMessage(msg.parentMessageId!)}
-                                                        className="mb-1 p-1.5 bg-black/20 border-l-2 border-blue-500 rounded cursor-pointer hover:bg-black/30 transition-colors overflow-hidden"
+                                                        className="mb-1 p-1 bg-black/20 border-l-2 border-blue-500 rounded cursor-pointer hover:bg-black/30 transition-colors overflow-hidden"
                                                     >
                                                         <p className="text-[9px] font-bold text-blue-400 uppercase">
                                                             Ответ на сообщение

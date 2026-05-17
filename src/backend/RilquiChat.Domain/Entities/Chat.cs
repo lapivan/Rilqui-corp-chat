@@ -66,7 +66,10 @@ public class Chat : BaseEntity
     {
         _messages.Add(message);
     }
-    
+    public void UpdateTimestamp(DateTime utcDateTime)
+    {
+        UpdatedAt = utcDateTime;
+    }
     public void PinMessage(Message message)
     {
         if (message.ChatId != this.Id) throw new InvalidOperationException("Message does not belong to this chat.");

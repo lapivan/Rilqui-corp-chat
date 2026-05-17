@@ -27,7 +27,8 @@ public class RenameChatHandler(
         
         await unitOfWork.SaveChangesAsync(cancellationToken);
         
-        await signalRService.NotifyChatRenameAsync(chat.Id, chat.Title);
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+        await signalRService.NotifyChatRenameAsync(memberIds, chat.Id, chat.Title);
 
         return Unit.Value;
     }

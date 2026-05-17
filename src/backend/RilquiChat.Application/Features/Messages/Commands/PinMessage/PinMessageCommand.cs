@@ -38,7 +38,8 @@ public class PinMessageHandler(
 
         await unitOfWork.SaveChangesAsync(ct);
         
-        await signalRService.SendUpdateAsync(message.ChatId, message.Adapt<MessageDto>());
+        var memberIds = chat.Members.Select(m => m.UserId).ToList();
+        await signalRService.SendUpdateAsync(memberIds, message.Adapt<MessageDto>());
         
         return Unit.Value;
     }

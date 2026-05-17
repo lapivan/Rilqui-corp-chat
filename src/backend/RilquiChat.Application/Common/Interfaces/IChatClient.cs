@@ -16,4 +16,5 @@ public interface IChatClient
     
     Task UserIsTyping(Guid chatId, string username);
     Task ChatRemoved(Guid chatId);
+    Task MessageDeleted(Guid chatId, Guid messageId, MessageDto? nextLastMessage);
 }
