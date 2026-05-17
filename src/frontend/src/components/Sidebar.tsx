@@ -57,11 +57,17 @@ export const Sidebar = () => {
         performSearch();
     }, [debouncedSearch, currentUser?.id]);
 
-    // Логика фильтрации вкладок
+    // Логика фильтрации и хронологической сортировки вкладок
     const filteredChats = useMemo(() => {
-        const sorted = [...chats].sort((a, b) => 
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        );
+        // Вспомогательная функция для получения таймстемпа чата
+        const getChatTimestamp = (chat: typeof chats[0]) => {
+            return chat.lastMessage 
+                ? new Date(chat.lastMessage.createdAt).getTime() 
+                : new Date(chat.updatedAt).getTime();
+        };
+
+        // Сортируем: от самых свежих (больший таймстемп) к старым
+        const sorted = [...chats].sort((a, b) => getChatTimestamp(b) - getChatTimestamp(a));
 
         if (activeTab === 'Personal') {
             return sorted.filter(chat => chat.type === ChatType.Direct);

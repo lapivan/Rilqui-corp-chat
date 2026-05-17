@@ -7,9 +7,10 @@ import type { MessageDto } from '../types';
 interface ChatSearchProps {
     chatId: string;
     onClose: () => void;
+    onMessageJump: (messageId: string) => void; // <-- Добавили новый проп
 }
 
-export const ChatSearch = ({ chatId, onClose }: ChatSearchProps) => {
+export const ChatSearch = ({ chatId, onClose, onMessageJump }: ChatSearchProps) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<MessageDto[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -58,8 +59,8 @@ export const ChatSearch = ({ chatId, onClose }: ChatSearchProps) => {
                             key={msg.id}
                             className="p-3 hover:bg-slate-800/50 cursor-pointer border-b border-slate-800/50 last:border-none"
                             onClick={() => {
-                                /* В будущем тут будет логика прыжка к сообщению */
-                                console.log("Jump to message", msg.id);
+                                onMessageJump(msg.id); // <-- Прыгаем к сообщению
+                                onClose();             // <-- Закрываем поиск
                             }}
                         >
                             <div className="flex justify-between items-start mb-1">

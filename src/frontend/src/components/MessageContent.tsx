@@ -13,10 +13,12 @@ export const MessageContent = ({ message }: { message: MessageDto }) => {
 
     const renderText = (content: string) => (
         <div className="relative">
-            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap inline">{content}</p>
+            {/* Уменьшили шрифт с text-sm до text-xs, сделали его более плотным */}
+            <p className="text-xs leading-relaxed break-words whitespace-pre-wrap inline">{content}</p>
+            {/* Немного сжали шрифт (edited) */}
             {isEdited && (
                 <span 
-                    className="text-[10px] opacity-50 ml-2 italic select-none" 
+                    className="text-[9px] opacity-50 ml-1.5 italic select-none" 
                     title={message.updatedAt ? new Date(message.updatedAt).toLocaleString() : ''}
                 >
                     (edited)
@@ -37,13 +39,15 @@ export const MessageContent = ({ message }: { message: MessageDto }) => {
     const fileSizeKB = message.fileSize ? (message.fileSize / 1024).toFixed(1) : 'Unknown';
 
     return (
-        <div className="space-y-2">
+        // Уменьшили вертикальный отступ между файлом и подписью с space-y-2 до space-y-1
+        <div className="space-y-1">
             {isImage ? (
                 <div className="rounded-lg overflow-hidden border border-slate-700/50 bg-slate-800/50">
                     <img 
                         src={fullUrl} 
                         alt={fileName} 
-                        className="max-w-full max-h-80 object-contain hover:opacity-90 transition-opacity cursor-pointer"
+                        // Снизили максимальную высоту картинки с max-h-80 (320px) до max-h-48 (192px)
+                        className="max-w-full max-h-48 object-contain hover:opacity-90 transition-opacity cursor-pointer"
                         onClick={() => window.open(fullUrl, '_blank')}
                     />
                 </div>
@@ -53,7 +57,8 @@ export const MessageContent = ({ message }: { message: MessageDto }) => {
                         src={fullUrl} 
                         controls 
                         preload="metadata"
-                        className="max-w-full max-h-80 object-contain"
+                        // Снизили максимальную высоту видео с max-h-80 до max-h-48
+                        className="max-w-full max-h-48 object-contain"
                     />
                 </div>
             ) : (
@@ -62,16 +67,19 @@ export const MessageContent = ({ message }: { message: MessageDto }) => {
                     target="_blank" 
                     rel="noreferrer"
                     download={fileName} 
-                    className="flex items-center gap-3 p-3 bg-slate-800/50 hover:bg-slate-700/50 rounded-xl border border-slate-700/50 transition-colors group"
+                    // Снизили внутренние отступы с p-3 до p-1.5, скругление углов с rounded-xl до rounded-lg
+                    className="flex items-center gap-2 p-1.5 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg border border-slate-700/50 transition-colors group"
                 >
-                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
-                        <FileText size={20} />
+                    {/* Сжали иконку файла с w-10 h-10 до w-7 h-7 */}
+                    <div className="w-7 h-7 bg-blue-500/20 rounded-md flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all flex-shrink-0">
+                        <FileText size={15} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-200 truncate">{fileName}</p>
-                        <p className="text-xs text-slate-500">{fileSizeKB} KB</p>
+                        {/* Снизили шрифты названия файла (с text-sm до text-xs) и его веса (с text-xs до [10px]) */}
+                        <p className="text-xs font-medium text-slate-200 truncate">{fileName}</p>
+                        <p className="text-[10px] text-slate-500">{fileSizeKB} KB</p>
                     </div>
-                    <Download size={18} className="text-slate-500 group-hover:text-slate-300" />
+                    <Download size={14} className="text-slate-500 group-hover:text-slate-300 mr-1 flex-shrink-0" />
                 </a>
             )}
             

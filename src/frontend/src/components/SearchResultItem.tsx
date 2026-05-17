@@ -1,5 +1,6 @@
 import type { UserDto } from '../types';
 import { User } from 'lucide-react';
+import { getFullUrl } from '../utils/urlHelpers';
 
 interface SearchResultItemProps {
     user: UserDto;
@@ -15,7 +16,11 @@ export const SearchResultItem = ({ user, onClick, isCreating }: SearchResultItem
         >
             <div className="w-12 h-12 rounded-full bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-700">
                 {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.fullname} className="w-full h-full object-cover" />
+                    <img 
+                        src={getFullUrl(user.avatarUrl)} 
+                        alt={user.fullname} 
+                        className="w-full h-full object-cover" 
+                    />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-blue-600/20 text-blue-400">
                         <User size={24} />
