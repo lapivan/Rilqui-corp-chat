@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RilquiChat.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RilquiChat.WebApi", "src\backend\RilquiChat.WebApi\RilquiChat.WebApi.csproj", "{E2BCA30A-A19D-43AB-8FAC-C23F5C73D2FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RilquiChat.Tests", "src\backend\RilquiChat.Tests\RilquiChat.Tests.csproj", "{77DB2E4F-80F8-444A-9519-E71B4057F7F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E2BCA30A-A19D-43AB-8FAC-C23F5C73D2FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2BCA30A-A19D-43AB-8FAC-C23F5C73D2FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2BCA30A-A19D-43AB-8FAC-C23F5C73D2FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77DB2E4F-80F8-444A-9519-E71B4057F7F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77DB2E4F-80F8-444A-9519-E71B4057F7F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77DB2E4F-80F8-444A-9519-E71B4057F7F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77DB2E4F-80F8-444A-9519-E71B4057F7F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

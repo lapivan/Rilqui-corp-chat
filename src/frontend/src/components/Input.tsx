@@ -1,28 +1,36 @@
 import React from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps
+    extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
 }
 
-export const Input = ({ label, error, ...props }: InputProps) => {
+export const Input = ({
+    label,
+    error,
+    ...props
+}: InputProps) => {
     return (
-        <div className="flex flex-col w-full mb-5">
+        <div className="mb-5 flex w-full flex-col">
             {label && (
-                <label className="text-slate-300 text-sm font-medium mb-1.5 ml-1">
+                <label className="mb-2 ml-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                     {label}
                 </label>
             )}
+
             <input
-                className={`w-full bg-slate-900/50 border ${
-                    error ? 'border-red-500/50 focus:border-red-500' : 'border-slate-700 focus:border-blue-500'
-                } text-slate-100 p-3 rounded-xl focus:outline-none focus:ring-4 ${
-                    error ? 'focus:ring-red-500/10' : 'focus:ring-blue-500/10'
-                } transition-all duration-300 placeholder:text-slate-600 shadow-inner`}
+                className={`w-full rounded-2xl border bg-slate-950/90 px-4 py-3 text-sm text-slate-100 shadow-inner outline-none transition-all duration-200 placeholder:text-slate-600
+                ${
+                    error
+                        ? 'border-red-500/40 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                        : 'border-slate-800 focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5'
+                }`}
                 {...props}
             />
+
             {error && (
-                <span className="text-red-400 text-xs font-medium mt-1.5 ml-1 animate-in slide-in-from-top-1">
+                <span className="mt-2 ml-1 text-xs font-medium text-red-400 animate-in slide-in-from-top-1">
                     {error}
                 </span>
             )}
