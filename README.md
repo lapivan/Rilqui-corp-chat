@@ -19,7 +19,7 @@
 
 | Главное окно чата | Панель чатов |
 |-------------------|---------------------|
-| <img src="../Rilqui-corp-chat/docs/chat.svg"/> | <img src="../Rilqui-corp-chat/docs/chats.svg"> |
+| <img src="docs/chat.svg"/> | <img src="docs/chats.svg"> |
 
 ---
 
