@@ -1,0 +1,16 @@
+Сотрудники
+e-mail	                    password
+ivan@test.com			    Password123!
+testusr@test.com	        Password123!
+polonskayaevgenia@gmail.com	Password123!
+golovinandrey@gmail.com	    Password123!
+grigoriylyahov@gmail.com	Password123!
+
+Стажёры
+e-mail	                    password
+hiltonmaria@gmail.com	    Password123!
+emelyanenkopetr@gmail.com	Password123!
+
+Boss
+e-mail	                    password
+igorkorolev@mail.com	    Password123!
